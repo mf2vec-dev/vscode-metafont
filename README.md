@@ -12,10 +12,7 @@ A Visual Studio Code extension with language and preview support for METAFONT.
     - [METAPOST focused](#metapost-focused)
 
 
-
 ## Setup
-> [!NOTE]
-> This extension will be made available on the VS Code Extension Marketplace soon.
 
 1. clone this repository, change to the new directory
 2. `npm install`
