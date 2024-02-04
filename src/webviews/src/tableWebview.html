@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>METAFONT Table</title>
+    <script>var exports = {};</script>
+    <link href="${webview.css}" rel="stylesheet"/>
+    <link href="${tableWebview.css}" rel="stylesheet"/>
+    <script type="module" src="${registerWebviewUiToolkit.js}"></script>
+    <link href="${codicon.css}" rel="stylesheet"/>
+  </head>
+  <body>
+    <div id="title-bar"></div>
+    <vscode-divider></vscode-divider>
+    <vscode-data-grid id="data-grid" generate-header="sticky"></vscode-data-grid>
+  </body>
+  <script type="module" src="${tableWebview.js}"></script>
+</html>

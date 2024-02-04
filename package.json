@@ -1,0 +1,331 @@
+{
+  "name": "vscode-metafont",
+  "displayName": "METAFONT",
+  "description": "METAFONT Language Support",
+  "version": "0.0.1",
+  "publisher": "mf2vec-dev",
+  "icon": "img/ext/vscode-metafont.png",
+  "preview": true,
+  "engines": {
+    "vscode": "^1.86.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Linters",
+    "Other",
+    "Programming Languages",
+    "Visualization"
+  ],
+  "activationEvents": [],
+  "//": "automatically generated from contribution declarations",
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "metafont",
+        "aliases": [
+          "METAFONT"
+        ],
+        "extensions": [
+          ".mf"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "dark": "./img/ext/mf-icon-dark.svg",
+          "light": "./img/ext/mf-icon-light.svg"
+        }
+      }
+    ],
+    "configurationDefaults": {
+      "[metafont]": {
+        "editor.wordSeparators": "%*()-=+[{]}\\|;:\",.<>/",
+        "//": "The following characters were removed from vscode's default since they appear as part of variable names: `~!@#$^&'?"
+      }
+    },
+    "grammars": [
+      {
+        "language": "metafont",
+        "scopeName": "source.metafont",
+        "path": "./out/language/metafont.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "vscode-metafont.select-base",
+        "title": "Select METAFONT base"
+      },
+      {
+        "command": "vscode-metafont.run-mf-active-file",
+        "title": "Run METAFONT with current file",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vscode-metafont.run-mf-default-job",
+        "title": "Run METAFONT with default job file",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vscode-metafont.generate-gftodvi-active-file",
+        "title": "Generate proof sheets from current file",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vscode-metafont.generate-gftodvi-default-job",
+        "title": "Generate proof sheets from default job file",
+        "icon": "$(play)"
+      },
+      {
+        "command": "vscode-metafont.new-glyph-preview-panel",
+        "title": "Open new METAFONT Glyph Preview Panel",
+        "icon": "./img/ext/preview-icon.svg"
+      },
+      {
+        "command": "vscode-metafont.new-font-preview-panel",
+        "title": "Open new METAFONT Font Preview Panel",
+        "icon": "./img/ext/preview-icon.svg"
+      },
+      {
+        "command": "vscode-metafont.new-glyph-overview-panel",
+        "title": "Open new METAFONT Glyph Overview",
+        "icon": "./img/ext/preview-icon.svg"
+      },
+      {
+        "command": "vscode-metafont.refresh-all-file-webviews",
+        "title": "Refresh all METAFONT file dependent webviews"
+      },
+      {
+        "command": "vscode-metafont.refresh-metafont-files-tree-data",
+        "title": "Refresh METAFONT Files Tree",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "vscode-metafont.set-as-default-job",
+        "title": "Set this file as default job",
+        "icon": "$(home)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "vscode-metafont.new-glyph-preview-panel",
+          "when": "editorLangId == metafont",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-metafont.new-font-preview-panel",
+          "when": "editorLangId == metafont",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "vscode-metafont.new-glyph-preview-panel",
+          "when": "editorLangId == metafont",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/run": [
+        {
+          "command": "vscode-metafont.run-mf-active-file",
+          "when": "editorLangId == metafont"
+        },
+        {
+          "command": "vscode-metafont.run-mf-default-job",
+          "when": "editorLangId == metafont"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "vscode-metafont.set-as-default-job",
+          "when": "view == vscode-metafont-metafont-files-tree && viewItem == mfFile",
+          "group": "inline"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "vscode-metafont.new-glyph-preview-panel",
+          "when": "view == vscode-metafont-glyph-preview-view",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-metafont.new-font-preview-panel",
+          "when": "view == vscode-metafont-font-preview-view",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-metafont.new-glyph-overview-panel",
+          "when": "view == vscode-metafont-glyph-overview-view",
+          "group": "navigation"
+        },
+        {
+          "command": "vscode-metafont.refresh-metafont-files-tree-data",
+          "when": "view == vscode-metafont-metafont-files-tree",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "vscode-metafont-project-explorer",
+          "title": "METAFONT Project Explorer",
+          "icon": "./img/ext/mf-icon-dark.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "vscode-metafont-panel-view-container",
+          "title": "METAFONT",
+          "icon": "./img/ext/mf-icon-dark.svg"
+        }
+      ]
+    },
+    "views": {
+      "debug": [
+        {
+          "type": "webview",
+          "id": "vscode-metafont-debug-expression-preview-view",
+          "name": "Expression Preview",
+          "contextualTitle": "METAFONT Debugging Expression Preview",
+          "when": "debugType == metafont"
+        }
+      ],
+      "vscode-metafont-project-explorer": [
+        {
+          "type": "tree",
+          "id": "vscode-metafont-metafont-files-tree",
+          "name": "MF Files",
+          "contextualTitle": "METAFONT Files"
+        },
+        {
+          "type": "webview",
+          "id": "vscode-metafont-glyph-table-view",
+          "name": "Glyphs",
+          "contextualTitle": "METAFONT Glyph Table"
+        },
+        {
+          "type": "webview",
+          "id": "vscode-metafont-kerning-table-view",
+          "name": "Kerning",
+          "contextualTitle": "METAFONT Kerning"
+        },
+        {
+          "type": "webview",
+          "id": "vscode-metafont-ligature-table-view",
+          "name": "Ligatures",
+          "contextualTitle": "METAFONT Ligatures"
+        },
+        {
+          "type": "webview",
+          "id": "vscode-metafont-glyph-overview-view",
+          "name": "Glyph Overview",
+          "contextualTitle": "METAFONT Glyph Overview"
+        },
+        {
+          "type": "webview",
+          "id": "vscode-metafont-glyph-preview-view",
+          "name": "Glyph Preview",
+          "contextualTitle": "METAFONT Glyph Preview"
+        }
+      ],
+      "vscode-metafont-panel-view-container": [
+        {
+          "type": "webview",
+          "id": "vscode-metafont-font-preview-view",
+          "name": "Font Preview",
+          "contextualTitle": "METAFONT Font Preview"
+        }
+      ]
+    },
+    "breakpoints": [
+      {
+        "language": "metafont"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "metafont",
+        "label": "METAFONT",
+        "languages": [
+          "METAFONT"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "properties": {
+              "inputFile": {
+                "default": "${file}",
+                "description": "Absolute path to the input file.",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "type": "metafont",
+            "request": "launch",
+            "name": "Debug METAFONT file",
+            "inputFile": "${file}"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Debug METAFONT: Launch",
+            "description": "A new configuration for debugging a METAFONT file.",
+            "body": {
+              "type": "metafont",
+              "request": "launch",
+              "name": "Debug METAFONT file",
+              "inputFile": "^\"\\${file}\""
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "capabilities": {},
+  "scripts": {
+    "vscode:prepublish": "npm run setUp && npm run esbuildBase -- --minify && npm run esbuildBaseServer -- --minify",
+    "esbuildBase": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuildBaseServer": "esbuild ./src/language/server.ts --bundle --outfile=out/language/server.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run esbuildBase -- --sourcemap && npm run esbuildBaseServer -- --sourcemap",
+    "compile": "npm run setUp && tsc -p ./",
+    "watch": "npm run setUp && tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "test": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext ts",
+    "setUp": "node ./setUpWebviews.js && node ./setUpLanguage.js && npm run copyWebviews && npm run copyTestFixtures",
+    "copyWebviews": "cp ./src/webviews/src/webview.css ./out/webviews/src/webview.css && npm run copyGeometryWebview && npm run copyTableWebview",
+    "copyGeometryWebview": "cp ./src/webviews/src/geometryWebview.html ./out/webviews/src/geometryWebview.html && cp ./src/webviews/src/geometryWebview.css ./out/webviews/src/geometryWebview.css",
+    "copyTableWebview": "cp ./src/webviews/src/tableWebview.html ./out/webviews/src/tableWebview.html && cp ./src/webviews/src/tableWebview.css ./out/webviews/src/tableWebview.css",
+    "copyTestFixtures": "cp -r ./src/test/fixtures/ ./out/test/"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.35",
+    "@vscode/debugadapter": "^1.63.0",
+    "await-notify": "^1.0.1",
+    "lodash": "^4.17.21",
+    "vscode-languageclient": "^9.0.1",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-protocol": "3.17.5",
+    "vscode-languageserver-textdocument": "^1.0.11",
+    "vscode-languageserver-types": "3.17.5"
+  },
+  "devDependencies": {
+    "@types/lodash": "^4.14.202",
+    "@types/mocha": "^10.0.2",
+    "@types/node": "^18.18.5",
+    "@types/vscode": "^1.83.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "@vscode/test-electron": "^2.3.9",
+    "@vscode/webview-ui-toolkit": "^1.2.2",
+    "esbuild": "^0.16.17",
+    "eslint": "^8.50.0",
+    "eslint-plugin-import": "^2.29.1",
+    "glob": "^10.3.3",
+    "js-yaml": "^4.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^5.2.2"
+  }
+}

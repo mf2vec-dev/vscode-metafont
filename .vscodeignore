@@ -1,0 +1,19 @@
+.vscode
+.vscode-test
+img/doc
+node_modules
+  !node_modules/@vscode/codicons/dist/codicon.css
+  !node_modules/@vscode/codicons/dist/codicon.ttf
+out/test
+src
+.eslintrc.json
+.gitignore
+.vscodeignore
+package-lock.json
+setUpLanguage.js
+setUpWebviews.js
+tsconfig.json
+**/*.map
+**/*.ts
+**/*.vsix
+**/*.zip

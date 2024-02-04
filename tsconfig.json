@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"module": "commonjs",
+		"target": "ES2020",
+		"outDir": "out",
+		"lib": [
+			"ES2023",
+			"DOM"
+		],
+		"sourceMap": true,
+		"rootDir": "src",
+		"strict": true,
+		"noImplicitAny": false,
+		"skipLibCheck": true,
+		"resolveJsonModule": true
+	},
+	"exclude": ["src/webviews/src/**"]
+}

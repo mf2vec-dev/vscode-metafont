@@ -1,0 +1,749 @@
+$schema: https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json
+name: METAFONT
+fileTypes:
+  - .mf
+_patterns: # everything here needs to be escaped as needed for regex
+  - &tokenSeparator !join [ # this will be ignored by metafont but separates tokens
+      '\s*', # todo newline doesn't work
+      '(?:',
+        '(?<!\d|\.)',
+        '\.',
+        '(?!\d|\.)',
+        '\s*',
+      ')?'
+    ]
+
+  # character groups of metafont symbolic tokens
+  # [The METAFONTbook, p.51, character table]
+  # to be used in character classes / bracket expressions
+  - &letterClassChars 'A-Za-z_'
+  - &relationClassChars '<=>:|'
+  - &quoteClassChars "`'"
+  - &plusMinusClassChars '+-'
+  - &timesSlashClassChars '/*\\'
+  - &markClassChars '!?'
+  - &symbolClassChars '#&@$'
+  - &accentClassChars '\^~'
+  - &oBracketClassChars '\['
+  - &cBracketClassChars '\]'
+  - &braceClassChars '{}'
+  - &periodClassChars '.'
+  # comma, semicolon, oParen, cParen are loners
+  - &comma ','
+  - &semicolon ';'
+  - &oParen '\('
+  - &cParen '\)'
+
+  # classes
+  - &letterClass !join ['[', *letterClassChars, ']']
+  - &relationClass !join ['[', *relationClassChars, ']']
+  - &quoteClass !join ['[', *quoteClassChars, ']']
+  - &plusMinusClass !join ['[', *plusMinusClassChars, ']']
+  - &timesSlashClass !join ['[', *timesSlashClassChars, ']']
+  - &markClass !join ['[', *markClassChars, ']']
+  - &symbolClass !join ['[', *symbolClassChars, ']']
+  - &accentClass !join ['[', *accentClassChars, ']']
+  - &oBracketClass !join ['[', *oBracketClassChars, ']']
+  - &cBracketClass !join ['[', *cBracketClassChars, ']']
+  - &braceClass  !join ['[', *braceClassChars, ']']
+  - &braceClass  !join ['[', *braceClassChars, ']']
+  - &periodClass  !join ['[', *periodClassChars, ']']
+
+  # complement classes
+  - &letterCClass !join ['[^', *letterClassChars, ']']
+  - &relationCClass !join ['[^', *relationClassChars, ']']
+  - &quoteCClass !join ['[^', *quoteClassChars, ']']
+  - &plusMinusCClass !join ['[^', *plusMinusClassChars, ']']
+  - &timesSlashCClass !join ['[^', *timesSlashClassChars, ']']
+  - &markCClass !join ['[^', *markClassChars, ']']
+  - &symbolCClass !join ['[^', *symbolClassChars, ']']
+  - &accentCClass !join ['[^', *accentClassChars, ']']
+  - &oBracketCClass !join ['[^', *oBracketClassChars, ']']
+  - &cBracketCClass !join ['[^', *cBracketClassChars, ']']
+  - &braceCClass  !join ['[^', *braceClassChars, ']']
+  - &braceCClass  !join ['[^', *braceClassChars, ']']
+  - &periodCClass  !join ['[^', *periodClassChars, ']']
+
+  # token patterns
+  - &letterToken !join [*letterClass, '+']
+  - &relationToken !join [*relationClass, '+']
+  - &quoteToken !join [*quoteClass, '+']
+  - &plusMinusToken !join [*plusMinusClass, '+']
+  - &timesSlashToken !join [*timesSlashClass, '+']
+  - &markToken !join [*markClass, '+']
+  - &symbolToken !join [*symbolClass, '+']
+  - &nonAmpersandSymbolToken !join ['(?:#@$|', *symbolClass, '{2,})'] # non-ampersand single character or multiple characters
+  - &accentToken !join [*accentClass, '+']
+  - &oBracketToken !join [*oBracketClass, '+']
+  - &cBracketToken !join [*cBracketClass, '+']
+  - &braceToken !join [*braceClass, '+']
+  - &periodToken !join [*periodClass, '{2,}']
+
+  # token boundary
+  - &letterTokenLb !join ['(?<=^|', *letterCClass, ')']
+  - &letterTokenRb !join ['(?=$|', *letterCClass, ')']
+  - &letterTokenBounded !join [*letterTokenLb, *letterToken, *letterTokenRb]
+  - &relationTokenLb !join ['(?<=^|', *relationCClass, ')']
+  - &relationTokenRb !join ['(?=$|', *relationCClass, ')']
+  - &relationTokenBounded !join [*relationTokenLb, *relationToken, *relationTokenRb]
+  - &quoteTokenLb !join ['(?<=^|', *quoteCClass, ')']
+  - &quoteTokenRb !join ['(?=$|', *quoteCClass, ')']
+  - &quoteTokenBounded !join [*quoteTokenLb, *quoteToken, *quoteTokenRb]
+  - &plusMinusTokenLb !join ['(?<=^|', *plusMinusCClass, ')']
+  - &plusMinusTokenRb !join ['(?=$|', *plusMinusCClass, ')']
+  - &plusMinusTokenBounded !join [*plusMinusTokenLb, *plusMinusToken, *plusMinusTokenRb]
+  - &timesSlashTokenLb !join ['(?<=^|', *timesSlashCClass, ')']
+  - &timesSlashTokenRb !join ['(?=$|', *timesSlashCClass, ')']
+  - &timesSlashTokenBounded !join [*timesSlashTokenLb, *timesSlashToken, *timesSlashTokenRb]
+  - &markTokenLb !join ['(?<=^|', *markCClass, ')']
+  - &markTokenRb !join ['(?=$|', *markCClass, ')']
+  - &markTokenBounded !join [*markTokenLb, *markToken, *markTokenRb]
+  - &symbolTokenLb !join ['(?<=^|', *symbolCClass, ')']
+  - &symbolTokenRb !join ['(?=$|', *symbolCClass, ')']
+  - &symbolTokenBounded !join [*symbolTokenLb, *symbolToken, *symbolTokenRb]
+  - &nonAmpersandSymbolTokenBounded !join [*symbolTokenLb, *nonAmpersandSymbolToken, *symbolTokenRb]
+  - &accentTokenLb !join ['(?<=^|', *accentCClass, ')']
+  - &accentTokenRb !join ['(?=$|', *accentCClass, ')']
+  - &accentTokenBounded !join [*accentTokenLb, *accentToken, *accentTokenRb]
+  - &oBracketTokenLb !join ['(?<=^|', *oBracketCClass, ')']
+  - &oBracketTokenRb !join ['(?=$|', *oBracketCClass, ')']
+  - &oBracketTokenBounded !join [*oBracketTokenLb, *oBracketToken, *oBracketTokenRb]
+  - &cBracketTokenLb !join ['(?<=^|', *cBracketCClass, ')']
+  - &cBracketTokenRb !join ['(?=$|', *cBracketCClass, ')']
+  - &cBracketTokenBounded !join [*cBracketTokenLb, *cBracketToken, *cBracketTokenRb]
+  - &braceTokenLb !join ['(?<=^|', *braceCClass, ')']
+  - &braceTokenRb !join ['(?=$|', *braceCClass, ')']
+  - &braceTokenBounded !join [*braceTokenLb, *braceToken, *braceTokenRb]
+  - &periodTokenLb !join ['(?<=^|', *periodCClass, ')']
+  - &periodTokenRb !join ['(?=$|', *periodCClass, ')']
+  - &periodTokenBounded !join [*periodTokenLb, *periodToken, *periodTokenRb]
+
+  # special tokens
+  - &is !join [
+      *relationTokenLb,
+      ':?=', # := = after definition heading
+      *relationTokenRb
+    ]
+
+  - &symbolicTokenBounded !join [
+      '(?:',
+        *letterTokenBounded,
+        '|', *relationTokenBounded,
+        '|', *quoteTokenBounded,
+        '|', *plusMinusTokenBounded,
+        '|', *timesSlashTokenBounded,
+        '|', *markTokenBounded,
+        '|', *symbolTokenBounded,
+        '|', *accentTokenBounded,
+        '|', *oBracketTokenBounded,
+        '|', *cBracketTokenBounded,
+        '|', *braceTokenBounded,
+        '|', *periodTokenBounded,
+        '|', *comma, # comma, semicolon, oParen, cParen are loners
+        '|', *semicolon,
+        '|', *oParen,
+        '|', *cParen,
+      ')'
+    ]
+  - &variableTagBounded !join [
+      # typical tags in variable name
+      '(?:',
+        *letterTokenBounded,
+        '|', *quoteTokenBounded,
+        '|', *nonAmpersandSymbolTokenBounded,
+      ')'
+    ]
+  - &floatToken '\d*\.\d+'
+  - &integerToken '\d+'
+  - &numericToken !join [
+      '(?:',
+        *floatToken, # float before integer
+        '|',
+        *integerToken,
+      ')'
+    ]
+
+  # complex patterns
+  - &variable !join [
+      *variableTagBounded,
+      '(?:',
+        *tokenSeparator,
+        '(?:',
+          *variableTagBounded, # tag
+          '|',
+          *numericToken,
+          '|',
+          '\[[^\]]+?\]', # numeric expression (bracket pair without closing bracket between)
+        ')',
+      ')*'
+    ]
+  - &parameterHeadingAndIsPattern8Captures !join [
+      # parameter matching is needed here since = and := are valid parameter names
+      '(?:', # delimited parameters with separator (
+        *tokenSeparator,
+        '(', # 1 ( # delimited parameters (
+          '(?:',
+            '\(',
+            '(?:',
+              *tokenSeparator,
+              *symbolicTokenBounded, # parameter type
+              *tokenSeparator,
+              *symbolicTokenBounded, # parameter
+              '(?:',
+                *tokenSeparator,
+                *comma,
+                *tokenSeparator,
+                *symbolicTokenBounded, # parameter
+              ')*',
+            ')?',
+            *tokenSeparator,
+            '\)?', # should match while closing parenthesis has not yet been typed
+          ')+',
+        ')?', # 1 )  # delimited parameters )
+      ')?', # delimited parameters with separator )
+      '(?:', # undelimited parameters (
+        *tokenSeparator,
+        *letterTokenLb,
+        '(primary|secondary|tertiary|suffix|text)', # 2
+        *letterTokenRb,
+        *tokenSeparator,
+        '(', # 3 (
+          *symbolicTokenBounded, # parameter
+        ')', # 3 )
+        '|',
+        *tokenSeparator,
+        *letterTokenLb,
+        '(expr)', # 4
+        *letterTokenRb,
+        *tokenSeparator,
+        '(', # 5 (
+          *symbolicTokenBounded, # parameter
+        ')', # 5 )
+        '(?:',
+          *tokenSeparator,
+          *letterTokenLb,
+          '(of)', # 6
+          *letterTokenRb,
+          *tokenSeparator,
+          '(', # 7 (
+            *symbolicTokenBounded, # parameter
+          ')', # 7 )
+        ')?',
+      ')?',  # undelimited parameters )
+      '(?:',
+        *tokenSeparator,
+        '(', # 8 (
+          *is,
+        ')', # 8 )
+      ')?', # should match parameters while = has not yet been typed
+    ]
+patterns:
+  - name: comment.line.percentage.metafont
+    match: '%.*'
+  # textual operators
+  - name: constant.language.boolean.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:true|false)',
+      *letterTokenRb
+    ]
+  - name: constant.language.path.metafont
+    match: !join [
+      *letterTokenLb,
+      'cycle',
+      *letterTokenRb
+    ] # todo cycle as constant?
+  - name: constant.language.pen.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:nullpen|pencircle)',
+      *letterTokenRb
+    ]
+  - name: constant.language.picture.metafont
+    match: !join [
+      *letterTokenLb,
+      'nullpicture',
+      *letterTokenRb
+    ]
+  - name: constant.language.string.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:jobname|readstring)',
+      *letterTokenRb
+    ] # todo readstring as constant ?
+  - name: constant.numeric.float.decimal.metafont
+    match: *floatToken
+  - name: constant.numeric.integer.decimal.metafont # integer pattern needs to be after float
+    match: *integerToken
+  - name: keyword.control.conditional.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:if|else|elseif|fi)',
+      *letterTokenRb
+    ]
+  - name: keyword.control.loop.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:for|forsuffixes|forever|exitif|endfor)',
+      *letterTokenRb
+    ]
+  # symbolic operators
+  - name: keyword.operator.arithmetic.metafont
+    match: !join [
+      *plusMinusTokenLb,
+      '(?:\+(?:\+|-\+)?|-)', # + ++ +-+ -
+      *plusMinusTokenRb,
+      '|',
+      *timesSlashTokenLb,
+      '(?:\*|\/)', # * /
+      *timesSlashTokenRb
+    ]
+  - name: keyword.operator.string.metafont
+    match: !join [
+      *symbolTokenLb,
+      '&',
+      *symbolTokenRb
+    ]
+  - name: keyword.operator.equation.metafont
+    match: !join [
+      *relationTokenLb,
+      '=', # = is used here since equation more frequent in code than relation
+      *relationTokenRb
+    ]
+  - name: keyword.operator.assignment.metafont # assignment
+    match: !join [
+      *relationTokenLb,
+      ':=',
+      *relationTokenRb
+    ]
+  - name: keyword.operator.ligature.metafont
+    match: !join [
+      *relationTokenLb,
+      '(?:',
+        '=:(?:\|>?)?', # =: =:| =:|>
+        '|',
+        '\|=:(?:>|\|>{0,2})?', # |=: |=:> |=:| |=:|> |=:|>>
+      ')',
+      *relationTokenRb
+    ]
+  - name: keyword.operator.relational.metafont
+    match: !join [
+      *relationTokenLb,
+      '(?:<(?:=|>)?|>=?)', # < <= <> > >= # note: = in assignment
+      *relationTokenRb
+    ]
+  # word operators
+  - name: keyword.operator.word.of.metafont
+    match: !join [
+      *letterTokenLb,
+      'of',
+      *letterTokenRb
+    ]
+  - name: keyword.operator.word.boolean.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:known|unknown|cycle|odd|charexists|not|and|or)',
+      *letterTokenRb
+    ]
+  - name: keyword.operator.word.numeric.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:length|ASCII|oct|hex|[xy][xy]?part|angle|turningnumber|totalweight|sqrt|sind|cosd|mlog|mexp|floor|uniformdeviate|directiontime)',
+      *letterTokenRb
+    ]
+  - name: keyword.operator.word.pair.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:point|precontrol|postcontrol|penoffset|intersectiontimes)',
+      *letterTokenRb
+      ]
+  - name: keyword.operator.word.path.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:makepath|reverse|subpath|curl|tension|atleast|controls)',
+      *letterTokenRb
+      ]
+  - name: keyword.operator.word.pen.metafont
+    match: !join [
+      *letterTokenLb,
+      'makepen',
+      *letterTokenRb
+      ]
+  - name: keyword.operator.word.string.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:str|char|decimal|substring)',
+      *letterTokenRb
+      ]
+  - name: keyword.operator.word.transform.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:rotated|scaled|shifted|slanted|transformed|xscaled|yscaled|zscaled)',
+      *letterTokenRb
+      ]
+  - name: keyword.operator.word.openwindow.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:from|to|at)',
+      *letterTokenRb
+    ]
+  - name: keyword.operator.word.ligtable.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:skipto|kern)',
+      *letterTokenRb
+    ]
+  - name: keyword.operator.word.picture.addto.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:also|contour|doublepath|with(?:pen|weight))',
+      *letterTokenRb
+    ]
+  - name: keyword.operator.word.picture.cull.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:keeping|dropping)',
+      *letterTokenRb
+    ]
+  # punctuation
+  - name: punctuation.accessor.period.metafont
+    match: '\.'
+  - name: punctuation.separator.comma.metafont
+    match: ','
+  - name: punctuation.terminator.semicolon.metafont
+    match: ';'
+  - name: punctuation.separator.colon.metafont
+    match: !join [
+      *relationTokenLb,
+      ':',
+      *relationTokenRb
+    ]
+  # strings
+  - name: string.quoted.double.metafont
+    begin: '(")'
+    beginCaptures:
+      '0':
+        name: punctuation.definition.string.begin.metafont
+    end: '(")|(\n)'
+    endCaptures:
+      '1':
+        name: punctuation.definition.string.end.metafont
+      '2':
+        name: invalid.illegal.newline.metafont
+  # types
+  - name: storage.type
+    match: !join [
+      *letterTokenLb,
+      '(?:boolean|string|path|pen|picture|transform|pair|numeric|newinternal)',
+      *letterTokenRb
+    ]
+  # internals
+  - name: variable.language.metafont
+    match: !join [
+      *letterTokenLb,
+      '(?:',
+        'tracingtitles|tracingequations|tracingcapsules|tracingchoices|tracingspecs|tracingpens|tracingcommands|tracingrestores|tracingmacros|tracingedges|tracingoutput|tracingonline|tracingstats',
+        '|pausing|showstopping|fontmaking|proofing|turningcheck|warningcheck|smoothing|autorounding|granularity|fillin|year|month|day|time',
+        '|charcode|charext|charwd|charht|chardp|charic|chardx|chardy|designsize|hppp|vppp|xoffset|yoffset|boundarychar',
+      ')',
+      *letterTokenRb
+    ]
+  # end/dump
+  - name: keyword.control.end.metafont
+    match: !join [
+      *letterTokenLb,
+      'end',
+      *letterTokenRb
+    ]
+  - name: keyword.control.dump.metafont
+    match: !join [
+      *letterTokenLb,
+      'dump',
+      *letterTokenRb
+    ]
+  # commands
+  - name: keyword.other.command.metafont
+    match: !join [
+      *letterTokenLb,
+      # todo
+      '(?:',
+        'save',
+        '|interim',
+        # newinternal is storage.type
+        # randomseed is defined below
+        '|let',
+        '|delimiters',
+        '|outer|inner', # protection command
+        '|everyjob',
+        '|show(?:variable|tokens|dependencies|stats)?', # show command
+        '|message|errmessage|errhelp', # message command
+        '|(?:batch|nonstop|scroll|errorstop)mode', # mode command
+        '|addto|cull', # picture command
+        '|display|inwindow', # display command
+        '|openwindow', # openwindow command
+        '|shipout',
+        '|special|numspecial',
+        '|ligtable|::|\|\|:', # ligtable # no colon here
+      ')',
+      *letterTokenRb,
+      '|',
+      *letterTokenLb,
+      'randomseed',
+      *letterTokenRb,
+      '(?:',
+        *tokenSeparator,
+        # relationTokenLb not needed
+        ':=',
+        *relationTokenRb,
+      ')?'
+    ]
+  # other out of syntax keywords
+  - name: meta.input.metafont
+    match: !join [
+      *letterTokenLb,
+      '(input)',
+      *letterTokenRb,
+      '\s*',
+      '([^\s;]*)'
+    ]
+    captures:
+      '1':
+        name: keyword.control.input.metafont
+      '2':
+        name: string.unquoted.input-filename.metafont
+  - name: keyword.control.endinput.metafont
+    match: !join [
+      *letterTokenLb,
+      'endinput',
+      *letterTokenRb
+    ]
+  - name: keyword.control.scantokens.metafont
+    match: !join [
+      *letterTokenLb,
+      'scantokens',
+      *letterTokenRb
+    ]
+  - name: keyword.control.expandafter.metafont
+    match: !join [
+      *letterTokenLb,
+      'expandafter',
+      *letterTokenRb
+    ]
+  # macro definitions
+  - name: meta.def.metafont
+    match: !join [
+      *letterTokenLb,
+      '(def)', # 1
+      *letterTokenRb,
+      '(?:',
+        *tokenSeparator,
+        '(', # 2 (
+          *symbolicTokenBounded, # macro name
+        ')', # 2 )
+        '(?:',
+          *parameterHeadingAndIsPattern8Captures,
+        ')?',  # should match 'def token' without rest of heading
+      ')?' # should match 'def' without rest of heading
+    ]
+    captures:
+      '1':
+        name: storage.type.function.def.metafont
+      '2':
+        name: entity.name.function.metafont
+      '3':
+        patterns:
+          - include: '#delimited-parameters'
+      # undelimited parameters
+      '4':
+        name: entity.name.type.metafont
+      '5':
+        name: variable.parameter.metafont
+      '6':
+        name: entity.name.type.metafont # expr
+      '7':
+        name: variable.parameter.metafont
+      '8':
+        name: entity.name.type.metafont # of
+      '9':
+        name: variable.parameter.metafont
+      # is
+      '10':
+        name: keyword.operator.is.metafont
+  - name: meta.vardef.metafont
+    match: !join [
+      *letterTokenLb,
+      '(vardef)', # 1
+      *letterTokenRb,
+      '(?:',
+        *tokenSeparator,
+        '(', # 2 (
+          *symbolicTokenBounded, # macro name
+        ')', # 2 )
+        '(?:',
+          *tokenSeparator,
+          '(@#)', # 3
+        ')?',
+        '(?:',
+          *parameterHeadingAndIsPattern8Captures,
+        ')?',  # should match 'def token' without rest of heading
+      ')?' # should match 'def' without rest of heading
+    ]
+    captures:
+      '1':
+        name: storage.type.function.vardef.metafont
+      '2':
+        name: entity.name.function.metafont
+      '3':
+        name: variable.parameter.metafont
+      '4':
+        patterns:
+          - include: '#delimited-parameters'
+      # undelimited parameters
+      '5':
+        name: entity.name.type.metafont
+      '6':
+        name: variable.parameter.metafont
+      '7':
+        name: entity.name.type.metafont # expr
+      '8':
+        name: variable.parameter.metafont
+      '9':
+        name: entity.name.type.metafont # of
+      '10':
+        name: variable.parameter.metafont
+      # is
+      '11':
+        name: keyword.operator.is.metafont
+  - name: meta.leveldef.metafont
+    match: !join [
+      *letterTokenLb,
+      '((?:primary|secondary|tertiary)def)', # 1
+      *letterTokenRb,
+      '(?:',
+        *tokenSeparator,
+        '(', # 2 (
+          *symbolicTokenBounded, # parameter
+        ')', # 2 )
+        '(?:',
+            *tokenSeparator,
+          '(', # 3 (
+            *symbolicTokenBounded, # macro name
+          ')', # 3 )
+          '(?:',
+            *tokenSeparator,
+            '(', # 4 (
+              *symbolicTokenBounded, # parameter
+            ')', # 4 )
+            '(?:',
+              *tokenSeparator,
+              '(', # 5 (
+                *is,
+              ')', # 5 )
+            ')?', # should match 'def param name param' without =
+          ')?', # should match 'def param name' without rest of heading
+        ')?', # should match 'def param' without rest of heading
+      ')?' # should match 'def' without rest of heading
+    ]
+    captures:
+      '1':
+        name: storage.type.function.leveldef.metafont
+      '2':
+        name: variable.parameter.metafont
+      '3':
+        name: entity.name.function.metafont
+      '4':
+        name: variable.parameter.metafont
+      '5':
+        name: keyword.operator.is.metafont
+  - name: entity.name.function.metafont # called macros # needs to be after defs
+    match: !join [
+      *variable,
+      '(?=',
+        *tokenSeparator,
+        '\(',
+      ')'
+    ]
+  - name: storage.type.function.enddef.metafont
+    match: !join [
+      *letterTokenLb,
+      'enddef',
+      *letterTokenRb
+    ]
+  # the following are fallbacks and therefore are at the end
+  # often used, fallback if not a function
+  - name: support.function.char.beginchar.metafont
+    match: !join [
+      *letterTokenLb,
+      'beginchar',
+      *letterTokenRb
+    ]
+  - name: support.function.char.endchar.metafont
+    match: !join [
+      *letterTokenLb,
+      'endchar',
+      *letterTokenRb
+    ]
+  # general variable names
+  - name: variable.other.metafont
+    match: !join [
+      *symbolicTokenBounded
+    ]
+repository:
+  delimited-parameters:
+    name: meta.parameters.delimited.metafont
+    match: !join [
+      '(', # 1 (
+        '\(',
+      ')', # 1 )
+      '(?:',
+        *tokenSeparator,
+        '(', # 2 (
+          *symbolicTokenBounded, # parameter type
+        ')', # 2 )
+        *tokenSeparator,
+        '(', # 3 (
+          *symbolicTokenBounded, # parameter
+        ')', # 3 )
+        '(', # 4 (
+          '(?:',
+            *tokenSeparator,
+            *comma,
+            *tokenSeparator,
+            *symbolicTokenBounded, # parameter
+          ')*',
+        ')', # 4 )
+      ')?',
+      *tokenSeparator,
+      '(', # 5 (
+        '\)',
+      ')?', # 5 ) # should match while closing parenthesis has not yet been typed
+    ]
+    captures:
+      '1':
+        name: punctuation.paren.open.delimited-parameter.metafont
+      '2':
+        name: entity.name.type.metafont
+      '3':
+        name: variable.parameter.metafont
+      '4':
+        patterns:
+          - include: '#delimited-parameter-tokens'
+      '5':
+        name: punctuation.paren.close.delimited-parameter.metafont
+  delimited-parameter-tokens:
+    name: meta.parameters.delimited.parameter-tokens.metafont
+    match: !join [
+      '(',
+        *comma,
+      ')',
+      *tokenSeparator,
+      '(',
+        *symbolicTokenBounded, # parameter
+      ')',
+    ]
+    captures:
+      '1':
+        name: punctuation.separator.comma.parameters.delimited.metafont
+      '2':
+        name: variable.parameter.metafont
+scopeName: source.metafont

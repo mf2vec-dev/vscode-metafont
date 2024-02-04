@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <title>METAFONT Geometry</title>
+    <script>var exports = {};</script>
+    <link href="${webview.css}" rel="stylesheet"/>
+    <link href="${geometryWebview.css}" rel="stylesheet"/>
+    <script type="module" src="${registerWebviewUiToolkit.js}"></script>
+    <link href="${codicon.css}" rel="stylesheet"/>
+  </head>
+  <body>
+    <template id="template-preview-options">
+      <div id="preview-options-container">
+        <div id="preview-options-button-container">
+          <vscode-button appearance="icon" id="preview-options-button">
+            <span class="codicon codicon-eye"></span>
+          </vscode-button>
+        </div>
+        <div id="preview-options-list">
+          <vscode-checkbox id="preview-option-box-lines" checked>Box lines</vscode-checkbox>
+          <vscode-checkbox id="preview-option-labels" checked>Labels</vscode-checkbox>
+          <vscode-checkbox id="preview-option-paths" checked>Paths</vscode-checkbox>
+          <div class="checkbox-indent" parent-id="preview-option-paths">
+            <vscode-checkbox parent-id="preview-option-paths" id="preview-option-control-points" checked>Control points</vscode-checkbox>
+            <vscode-checkbox parent-id="preview-option-paths" id="preview-option-on-curve-points" checked>On-curve points</vscode-checkbox>
+            <vscode-checkbox parent-id="preview-option-paths" id="preview-option-curves" checked>Curves</vscode-checkbox>
+          </div>
+          <vscode-checkbox id="preview-option-pictures" checked>Pictures</vscode-checkbox>
+          <vscode-checkbox id="preview-option-pixel-values" checked>Show pixel values</vscode-checkbox>
+          <vscode-checkbox id="preview-option-crisp-edges">Crisp pixel edges</vscode-checkbox>
+        </div>
+      </div>
+    </template>
+    <template id="template-preview">
+      <div id="preview">
+        <div id="preview-content-reference">
+          <svg xmlns="http://www.w3.org/2000/svg" id="preview-content"></svg>
+        </div>
+      </div>
+    </template>
+    <div id="title-bar"></div>
+    <vscode-divider></vscode-divider>
+    <div id="preview-container">
+    </div>
+  </body>
+  <script type="module" src="${geometryWebview.js}"></script>
+</html>

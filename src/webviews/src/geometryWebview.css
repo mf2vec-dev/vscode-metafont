@@ -1,0 +1,150 @@
+#preview-container {
+  flex: auto; /* needed ? */
+  overflow: hidden;
+  position: relative;
+}
+#preview-container.multi-preview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  overflow-y: scroll;
+}
+#preview-container.single-preview #preview {
+  height: 100%;
+  width: 100%;
+  cursor: grab;
+  overflow: hidden;
+}
+#preview-container.multi-preview #preview {
+  height: 150px;
+  overflow: hidden;
+  outline: solid 2px;
+  margin: 1px;
+  position: relative;
+}
+.preview-label {
+  position: absolute;
+  top: 0px;
+  left: 0;
+}
+#preview-content {
+  overflow: visible;
+}
+#preview-content line.box-line {
+  stroke: var(--vscode-disabledForeground);
+  stroke-width: calc(2/var(--preview-zoom));
+}
+#preview-content rect.transparent {
+  opacity: 0.5;
+}
+#preview-content rect.crisp-edges {
+  shape-rendering: crispEdges; /* to remove transparent gaps in pictures between rows */
+}
+#preview-content rect.pos-picture-row {
+  fill: var(--vscode-foreground);
+}
+#preview-content rect.neg-picture-row {
+  fill: var(--vscode-errorForeground);
+}
+#preview-content text {
+  transform-origin: 0 70%;
+  fill: var(--vscode-foreground);
+  font-size: calc(var(--vscode-font-size)/var(--preview-zoom));
+}
+#preview-content text.grayed-out {
+  fill: var(--vscode-disabledForeground)
+}
+#preview-content text.pos-top {
+  text-anchor: middle;
+  dominant-baseline: text-after-edge;
+}
+#preview-content text.pos-lft, #preview-content text.pos-auto {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+#preview-content text.pos-rt {
+  text-anchor: start;
+  dominant-baseline: middle;
+}
+#preview-content text.pos-bot {
+  text-anchor: middle;
+  dominant-baseline: text-before-edge;
+}
+#preview-content path.contour {
+  fill: none;
+  stroke: var(--vscode-foreground);
+  stroke-width: calc(2/var(--preview-zoom));
+}
+#preview-content path.grayed-out {
+  stroke: var(--vscode-disabledForeground);
+}
+#preview-content circle.on-curve-point {
+  fill: var(--vscode-editor-background);
+  stroke: var(--vscode-foreground);
+  stroke-width: calc(2/var(--preview-zoom));
+  r: calc(4/var(--preview-zoom));
+}
+#preview-content circle.grayed-out {
+  fill: var(--vscode-editor-background);
+  stroke: var(--vscode-disabledForeground);
+}
+#preview-content circle.control-point-1 {
+  fill: gray;
+  stroke: var(--vscode-charts-red);
+  stroke-width: calc(2/var(--preview-zoom));
+  r: calc(4/var(--preview-zoom));
+}
+#preview-content circle.control-point-1.grayed-out {
+  fill: var(--vscode-editor-background);
+  stroke: var(--vscode-disabledForeground);
+}
+#preview-content circle.control-point-2 {
+  fill: gray;
+  stroke: var(--vscode-charts-blue);
+  stroke-width: calc(2/var(--preview-zoom));
+  r: calc(4/var(--preview-zoom));
+}
+#preview-content circle.control-point-2.grayed-out {
+  fill: var(--vscode-editor-background);
+  stroke: var(--vscode-disabledForeground);
+}
+#preview-content line.control-point-line-1 {
+  fill: none;
+  stroke: var(--vscode-charts-red);
+  stroke-width: calc(1/var(--preview-zoom));
+}
+#preview-content line.control-point-line-1.grayed-out {
+  stroke: var(--vscode-disabledForeground);
+}
+#preview-content line.control-point-line-2 {
+  fill: none;
+  stroke: var(--vscode-charts-blue);
+  stroke-width: calc(1/var(--preview-zoom));
+}
+#preview-content line.control-point-line-2.grayed-out {
+  stroke: var(--vscode-disabledForeground);
+}
+#preview-options-button-container {
+  margin-left: auto;
+  margin-right: 0;
+  width: fit-content;
+}
+#preview-options-container {
+  display: none; /* display: block; */
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: var(--vscode-editor-background);
+  padding: 0 5px 5px 5px;
+  border-left: calc(var(--border-width) * 1px) solid var(--divider-background);
+  border-bottom: calc(var(--border-width) * 1px) solid var(--divider-background);
+  z-index: 1; /* foreground, in front of content */
+}
+#preview-options-list {
+  display: none; /* display: flex; */
+  flex-direction: column;
+}
+div.checkbox-indent {
+  display: flex;
+  flex-direction: column;
+  margin-left: calc(var(--design-unit) * 4px + 2px + var(--design-unit) * 2px + 2px); /* sum of width of checkbox and padding of label */
+}

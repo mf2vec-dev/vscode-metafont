@@ -1,0 +1,33 @@
+html {
+  height: 100%;
+  width: 100%;
+}
+body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+#title-bar {
+  /* width: 100%; */
+  display: flex;
+  overflow-x: scroll;
+  flex: none;
+}
+#title-bar.right-margin-for-preview-options {
+  margin-right: 33px; /* rough size (static) */
+}
+.title-bar-item-group {
+  display: flex;
+  margin: 2px 10px 2px 0;
+}
+.title-bar-item-group:first-child {
+  margin-left: 10px;
+}
+.title-bar-item-group label {
+  margin-right: 2px;
+}
+.title-bar-item-group vscode-button.toggled {
+  background: var(--vscode-actionBar-toggledBackground);
+}
