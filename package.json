@@ -4,6 +4,15 @@
   "description": "METAFONT Language Support",
   "version": "0.0.1",
   "publisher": "mf2vec-dev",
+  "license": "MIT",
+  "homepage": "https://github.com/mf2vec-dev/vscode-metafont",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mf2vec-dev/vscode-metafont"
+  },
+  "bugs": {
+    "url": "https://github.com/mf2vec-dev/vscode-metafont/issues"
+  },
   "icon": "img/ext/vscode-metafont.png",
   "preview": true,
   "engines": {

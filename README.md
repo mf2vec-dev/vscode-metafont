@@ -5,6 +5,7 @@ A Visual Studio Code extension with language and preview support for METAFONT.
 - [`vscode-metafont`](#vscode-metafont)
   - [Setup](#setup)
   - [Features](#features)
+  - [Screenshot](#screenshot)
   - [Motivation and Purpose](#motivation-and-purpose)
   - [Future enhancements](#future-enhancements)
   - [See also](#see-also)
@@ -53,6 +54,13 @@ A Visual Studio Code extension with language and preview support for METAFONT.
 
 > [!NOTE]
 > The previews should update every time you save a METAFONT file or change a preview option. Note that METAFONT needs to re-run in many cases which might take a few seconds. To speed this up, comment out code you are not working on (e.g. all but one program file `input` in the driver file or characters you are not editing).
+
+
+## Screenshot
+
+![screenshot](img/doc/screenshot.png)
+
+The screenshot(s) may be outdated as they are not updated with every update of the extension.
 
 
 ## Motivation and Purpose
