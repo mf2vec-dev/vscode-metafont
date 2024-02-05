@@ -3,7 +3,7 @@
 A Visual Studio Code extension with language and preview support for METAFONT.
 
 - [`vscode-metafont`](#vscode-metafont)
-  - [Setup](#setup)
+  - [Installation](#installation)
   - [Features](#features)
   - [Screenshot](#screenshot)
   - [Motivation and Purpose](#motivation-and-purpose)
@@ -12,8 +12,11 @@ A Visual Studio Code extension with language and preview support for METAFONT.
     - [METAPOST focused](#metapost-focused)
 
 
-## Setup
+## Installation
 
+You can install the extension from within VSCode (ID: `mf2vec-dev.vscode-metafont`). Alternatively, you can manually download the `.vsix` file of each release [here](https://github.com/mf2vec-dev/vscode-metafont/releases).
+
+You can also package the extension yourself:
 1. clone this repository, change to the new directory
 2. `npm install`
 3. `vsce package`
@@ -22,8 +25,7 @@ A Visual Studio Code extension with language and preview support for METAFONT.
 
 ## Features
 
-> [!NOTE]
-> Many features are still under development.
+**Note:** Many features are still under development.
 
 - Syntax highlighting
 - METAFONT file management\
@@ -49,8 +51,7 @@ A Visual Studio Code extension with language and preview support for METAFONT.
 - Useful commands:\
   This extension provides commands to run METAFONT or generate proof sheet PDFs.
 
-> [!NOTE]
-> The previews should update every time you save a METAFONT file or change a preview option. Note that METAFONT needs to re-run in many cases which might take a few seconds. To speed this up, comment out code you are not working on (e.g. all but one program file `input` in the driver file or characters you are not editing).
+**Note:** The previews should update every time you save a METAFONT file or change a preview option. Note that METAFONT needs to re-run in many cases which might take a few seconds. To speed this up, comment out code you are not working on (e.g. all but one program file `input` in the driver file or characters you are not editing).
 
 
 ## Screenshot
