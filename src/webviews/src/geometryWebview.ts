@@ -1,4 +1,4 @@
-import { contentDims, initTransform, previewTransforms, resetTransform } from './preview';
+import { contentDims, initTransform, previewTransforms, resetContentDims, resetTransform } from './preview';
 import { clearElement, postLoaded, setStatusIcon, updateTitleBar } from './webview';
 
 const styles = {
@@ -50,11 +50,6 @@ export function setUp(multiGeom = false) {
       break;
     }
   });
-  // window.addEventListener("resize", (e) => {
-  //   for (let i = 0; i < previews.length; i++) {
-  //     resetTransform(i);
-  //   }
-  // });
 
   postLoaded();
 }
@@ -338,6 +333,7 @@ function refresh() {
     previewContentReferences = [];
     previewLabels = [];
     previewTransforms.length = 0;
+    resetContentDims();
     for (let preview = 0; preview < refreshData.previewData.length; preview++) {
       addPreviewToPreviewContainer();
       const previewData = refreshData.previewData[preview];

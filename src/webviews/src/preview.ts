@@ -9,7 +9,7 @@ type ContentDims = {
   contentTotalHeight: number;
   contentTotalWidth: number;
 };
-export const contentDims: ContentDims[] = [];
+export let contentDims: ContentDims[] = [];
 
 type PreviewTransform = {
   x: number;
@@ -90,4 +90,8 @@ export function resetTransform(i: number) {
     zoom: zoom,
   };
   updateTransform(i);
+}
+
+export function resetContentDims() {
+  contentDims = [];
 }
