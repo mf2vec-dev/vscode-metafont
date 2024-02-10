@@ -100,9 +100,8 @@ export class MetafontParser {
       tokenLine = this.documentManager.getTokenRange(textDocument, tokens[i]).start.line;
       if (tokenLine !== lastTokenLine) {
         // this is the first token of a new line
-        if ((parseMode & ParseMode.nextLineNotReachable) === ParseMode.nextLineNotReachable) {
-          parseMode &= ~ParseMode.nextLineNotReachable; // clear
-          parseMode |= ParseMode.notReachable; // set
+        if (parseMode === ParseMode.nextLineNotReachable) {
+          parseMode = ParseMode.notReachable;
         }
       }
       this.handleNotReachable(parseMode, tokens, i);
@@ -472,10 +471,10 @@ export class MetafontParser {
         if (nestingStructure.some((s) => s.kind === NestingBlockKind.condition)) {
           tokens[i][3] |= TokenFlag.endInCondition;
         }
-        parseMode |= ParseMode.notReachable;
+        parseMode = ParseMode.notReachable;
         break;
       case 'endinput':
-        parseMode |= ParseMode.nextLineNotReachable;
+        parseMode = ParseMode.nextLineNotReachable;
         break;
       case 'input':
         const inputTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i]);
@@ -505,19 +504,19 @@ export class MetafontParser {
   }
 
   private handleNotReachable(parseMode: ParseMode, tokens: TokenData[], i: number) {
-    if ((parseMode & ParseMode.notReachable) === ParseMode.notReachable) {
-      tokens[i][3] |= TokenFlag.unreachable;
+    if (parseMode === ParseMode.notReachable) {
+      tokens[i][3] = TokenFlag.unreachable;
     }
   }
 
   /**
-   * In some cases (elseif, else, fi), the parseMode is set incorrectly and need to be fixed.
+   * In some cases (elseif, else, fi), the parseMode is set incorrectly and needs to be fixed.
    */
   private fixUnreachable(conditionalBlock: NestingBlockInfo, parseMode: ParseMode, tokens: TokenData[], i: number) {
     // if parseMode changed
-    if (conditionalBlock.parseModesBeforeBlock !== undefined && (conditionalBlock.parseModesBeforeBlock & ParseMode.notReachable) !== (parseMode & ParseMode.notReachable)) {
+    if (conditionalBlock.parseModesBeforeBlock !== undefined && conditionalBlock.parseModesBeforeBlock !== parseMode) {
       tokens[i][3] &= ~TokenFlag.unreachable; // turn off
-      if ((conditionalBlock.parseModesBeforeBlock & ParseMode.notReachable) === ParseMode.notReachable) {
+      if (conditionalBlock.parseModesBeforeBlock === ParseMode.notReachable) {
         // turn on according to parseModesBeforeBlock
         tokens[i][3] |= TokenFlag.unreachable;
       }
