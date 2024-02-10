@@ -454,7 +454,9 @@ export class MetafontDebugWrapper extends EventEmitter {
     for (const trace of traces) {
       switch (trace.type) {
       case 'equation':
-        let varMatches = trace.trace.matchAll(/(?:[xy][xy]?part )?([A-Z_a-z`'!?#&@$](?:[A-Z_a-z`'!?#&@$\.0-9 ])*(?<!\.))/g);
+        // The negative lookbehind (?<![%CAPSUL]) prevents capturing CAPSULE1234 or APSULE1234 in %CAPSULE1234.
+        // Without this, CAPSULEnnnn would be added as a variable and METAFONT would try to evaluate it, with nnnn possibly exceeding METAFONT's infinity.
+        let varMatches = trace.trace.matchAll(/(?:[xy][xy]?part )?(?<![%CAPSUL])([A-Z_a-z`'!?#&@$](?:[A-Z_a-z`'!?#&@$\.\d ])*(?<!\.))/g);
         let vars = [...varMatches].map((match) => match[1]); // index 1 for match group, i.e. var name without xypart
         if (vars) {
           this.variableNames = [...new Set([...this.variableNames, ...vars])].sort();
