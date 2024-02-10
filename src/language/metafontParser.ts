@@ -324,6 +324,7 @@ export class MetafontParser {
         if (declaredVariableStr === undefined) {
           break;
         }
+        let declaredVariableI = i;
         i++; // continue after symbolic token (after first part of macro name)
         this.handleNotReachable(parseMode, tokens, i);
         // collect suffixes
@@ -430,7 +431,7 @@ export class MetafontParser {
           break;
         }
         identifiers.set(declaredVariableStr, {
-          declarationTokens: [{ idx: i + 1 }], // todo correct?
+          declarationTokens: [{ idx: declaredVariableI }],
           hover: hoverStr,
           tokenType: TokenType.function
         });
