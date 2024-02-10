@@ -22,13 +22,6 @@ export function activateMfFilesView(ctx: vscode.ExtensionContext, mfFileManager:
   };
   const mfFilesView = vscode.window.createTreeView('vscode-metafont-metafont-files-tree', mfFilesViewOptions);
   ctx.subscriptions.push(mfFilesView);
-
-  ctx.subscriptions.push(
-    vscode.commands.registerCommand(
-      'vscode-metafont.set-as-default-job',
-      (mfFile: types.MfFile) => mfFileManager.setDefaultJobPath(mfFile.uri.fsPath)
-    )
-  );
 }
 
 export class MfFilesDecorationProvider {

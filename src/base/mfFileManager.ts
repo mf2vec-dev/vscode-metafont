@@ -52,6 +52,20 @@ export class MfFileManager {
       undefined,
       ctx.subscriptions
     );
+
+    ctx.subscriptions.push(
+      vscode.commands.registerCommand(
+        'vscode-metafont.set-as-default-job',
+        (mfFile: types.MfFile) => this.setDefaultJobPath(mfFile.uri.fsPath)
+      )
+    );
+  
+    ctx.subscriptions.push(
+      vscode.commands.registerCommand(
+        'vscode-metafont.get-default-job',
+        () => this.defaultJobPath
+      )
+    );
   }
   async asyncInit() { // constructor cannot be async
     await this.refreshFromFiles();

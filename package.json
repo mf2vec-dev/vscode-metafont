@@ -111,6 +111,10 @@
         "command": "vscode-metafont.set-as-default-job",
         "title": "Set this file as default job",
         "icon": "$(home)"
+      },
+      {
+        "command": "vscode-metafont.get-default-job",
+        "title": "Get the path of the default job"
       }
     ],
     "menus": {
