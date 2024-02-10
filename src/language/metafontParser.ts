@@ -183,6 +183,7 @@ export class MetafontParser {
           nestingStructure.pop();
           if (parseMode === ParseMode.multiple) {
             tokens[i][3] |= TokenFlag.multipleParseModes;
+            parseMode = ParseMode.nothing;
           }
         } else {
           tokens[i][3] |= TokenFlag.unexpected;
@@ -577,8 +578,9 @@ export class MetafontParser {
     return identifiers;
   }
   private combineParseMode(nestedBlockInfo: NestingBlockInfo): ParseMode {
-    const parseMode = nestedBlockInfo.parseModesBeforeBlock!;
-    if (nestedBlockInfo.bodyTexts!.some((bodyText) => bodyText.parseMode !== parseMode)) {
+    const elseBodyText = nestedBlockInfo.bodyTexts!.find((bodyText) => bodyText.bodyTextKind === BodyTextKind.else);
+    const parseMode = elseBodyText === undefined ? nestedBlockInfo.parseModesBeforeBlock! : elseBodyText.parseMode!;
+    if (nestedBlockInfo.bodyTexts!.some((bodyText) => bodyText.parseMode !== parseMode && bodyText.parseMode !== ParseMode.notReachable)) { // Else might be checked against itself here, but filtering is not worth it.
       return ParseMode.multiple;
     }
     return parseMode;
