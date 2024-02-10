@@ -14,7 +14,8 @@ A Visual Studio Code extension with language and preview support for METAFONT.
 
 ## Installation
 
-You can install the extension from within VSCode (ID: `mf2vec-dev.vscode-metafont`). Alternatively, you can manually download the `.vsix` file of each release [here](https://github.com/mf2vec-dev/vscode-metafont/releases).
+You can install the extension from within VSCode (ID: `mf2vec-dev.vscode-metafont`).\
+Alternatively, you can manually download the `.vsix` file of each release [here](https://github.com/mf2vec-dev/vscode-metafont/releases).
 
 You can also package the extension yourself:
 1. clone this repository, change to the new directory
@@ -27,9 +28,12 @@ You can also package the extension yourself:
 
 **Note:** Many features are still under development.
 
-- Syntax highlighting
+- Language features\
+  syntax highlighting, semantic highlighting, hover, code indentation, code folding, token definition, etc.
 - METAFONT file management\
-  In the *MF Files* view, `.mf` files can be grouped in different categories. Parameter files can be marked as default job file to quickly generate proof sheets.
+  In the *MF Files* view, `.mf` files can be grouped in different categories. Parameter files can be marked as default job file for easy reference in other features.
+- Useful commands\
+  This extension provides commands to run METAFONT or generate proof sheet PDFs.
 - Preview of:
   - Current glyph (glyph preview)\
     Shows a preview of a glyph depending on your caret's (text cursor's) position. You can lock the reference to keep showing a specific glyph when editing other parts of your code.
@@ -45,11 +49,9 @@ You can also package the extension yourself:
     Table of all ligatures
 
   For all those previews, you can specify a *first line* and a *job file* to preview the output with different parameter files, modes/resolutions, etc. You can also move many previews to separate windows.
-- Debugging:\
+- Debugging\
   Set breakpoints to pause METAFONT on a specific line and inspect variables. Besides showing the values of `numeric`, `pair` and `transform` variables, the debugger also provides a visualization of `path` and `picture` variables and expressions.\
   Currently, debugging inside definitions/macros or loops is not supported.
-- Useful commands:\
-  This extension provides commands to run METAFONT or generate proof sheet PDFs.
 
 **Note:** The previews should update every time you save a METAFONT file or change a preview option. Note that METAFONT needs to re-run in many cases which might take a few seconds. To speed this up, comment out code you are not working on (e.g. all but one program file `input` in the driver file or characters you are not editing).
 
@@ -87,8 +89,12 @@ be more confident about doing so.
 
 - Code quality\
   This is my first big TypeScript/JavaScript/Node.js project so I'm new to this ecosystem. I hope to learn more and improve the code quality and test coverage along the way. Anyone with more experience is welcome to fix obvious flaws or discuss potential improvements.
+- Fixes and improvements\
+  There is still a lot of room for improvement in some language features. There are some major and many minor bugs in the debugger. The GUI of the previews could also be improved.
 - Better efficiency and speed\
   Running METAFONT less frequently for previews and updating them based on unsaved files, may allow for near real-time previews.
+- Notebook-like METAFONT interface [maybe]\
+  This might be useful for learning METAFONT, experiments, etc. with included interactive output of evaluated expressions, paths, pictures and maybe more.
 - Interactive function testing [maybe]\
   It would be great to be able to test macros interactively, e.g. move around points passed as input (pair value or point suffix) and see how a computed path or filled/drawn picture changes.
 - Interactive editing [maybe]\
@@ -104,7 +110,7 @@ be more confident about doing so.
 - [visualmetafont](https://github.com/DigitalKhatt/visualmetafont)
 - [Metaflop](https://www.metaflop.com)
 - [Metapolator](http://metapolator.com/)
-- [Metapolator](https://github.com/w4v3/metaforge) a FontForge plugin
+- [metaforge](https://github.com/w4v3/metaforge) a FontForge plugin
 
 
 ### METAPOST focused
