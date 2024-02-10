@@ -277,19 +277,29 @@
           {
             "type": "metafont",
             "request": "launch",
-            "name": "Debug METAFONT file",
+            "name": "Debug current METAFONT file",
             "inputFile": "${file}"
           }
         ],
         "configurationSnippets": [
           {
-            "label": "Debug METAFONT: Launch",
-            "description": "A new configuration for debugging a METAFONT file.",
+            "label": "METAFONT: Debug current file",
+            "description": "A new configuration for debugging the current METAFONT file.",
             "body": {
               "type": "metafont",
               "request": "launch",
-              "name": "Debug METAFONT file",
+              "name": "Debug current METAFONT file",
               "inputFile": "^\"\\${file}\""
+            }
+          },
+          {
+            "label": "METAFONT: Debug default job",
+            "description": "A new configuration for debugging the default METAFONT job.",
+            "body": {
+              "type": "metafont",
+              "request": "launch",
+              "name": "Debug METAFONT default job",
+              "inputFile": "^\"\\${command:vscode-metafont.get-default-job}\""
             }
           }
         ]
