@@ -369,9 +369,9 @@ export class MetafontParser {
           // parse delimited arg
           this.handleNotReachable(parseMode, tokens, i);
           const parameterTypeTokenStr = this.getTokenStr(textDocument, i);
-          if (parameterTypeTokenStr !== lastParameterTypeTokenStr) {
+          if (lastParameterTypeTokenStr === undefined) {
             hoverStr += `(${parameterTypeTokenStr} `;
-          } else if (lastParameterTypeTokenStr !== undefined) {
+          } else if (lastParameterTypeTokenStr !== parameterTypeTokenStr) {
             // not the first delimited parameter
             hoverStr += `)(${parameterTypeTokenStr} `;
           } else {
@@ -387,8 +387,10 @@ export class MetafontParser {
             this.handleNotReachable(parseMode, tokens, i);
             nextTokenStr = this.getTokenStr(textDocument, i); // should be , or )
             if (nextTokenStr === undefined || ![',', ')'].includes(nextTokenStr)) {
-              break;
-            }
+              break; // something is strange here
+            } else if (nextTokenStr === ',') {
+              hoverStr += ',';
+            } // else it's ), increase i and break loop with while condition
             i++; // continue after , or )
           }
           this.handleNotReachable(parseMode, tokens, i);
