@@ -72,9 +72,11 @@ export type IdentifierInfo = {
 const keywordPattern = joinRegexes([
   '^(?:',
   /if|else(?:if)?|fi/,
-  /|for(?:suffixes|ever)?|endfor/,
+  /|for(?:suffixes|ever)?|exitif|endfor/,
   /|(?:var|primary|secondary|tertiary|end)?def/,
-  /|end/,
+  /|end|dump/,
+  /|input|endinput/,
+  /|scantokens|expandafter/,
   ')$'
 ]);
 
