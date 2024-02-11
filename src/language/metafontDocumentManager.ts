@@ -15,6 +15,7 @@ enum TokenKind {
 let tokenFlagI = 0;
 export enum TokenFlag {
   ok = 0,
+  ignore = 1 << tokenFlagI++, // e.g. token is not a token since it is part of a file name
   error = 1 << tokenFlagI++,
   unexpected = 1 << tokenFlagI++,
   unreachable = 1 << tokenFlagI++,

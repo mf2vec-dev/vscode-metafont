@@ -14,7 +14,7 @@ import {
   SemanticTokensParams
 } from 'vscode-languageserver/node';
 
-import { DocumentData, MetafontDocumentManager, TokenType } from './metafontDocumentManager';
+import { DocumentData, MetafontDocumentManager, TokenFlag, TokenType } from './metafontDocumentManager';
 import { numericTokenPattern } from './regexes';
 import { Position, TextDocument } from 'vscode-languageserver-textdocument';
 
@@ -69,7 +69,7 @@ connection.onHover((hoverParams: HoverParams) => {
     }
     const tokenIdx = documentData.tokens.findIndex((token) => token[0] <= hoverOffset && hoverOffset <= token[0] + token[1]);
     const tokenData = documentData.tokens[tokenIdx];
-    if (!tokenData) {
+    if (!tokenData || (tokenData[3] && TokenFlag.ignore) === TokenFlag.ignore) {
       return;
     }
     const tokenLine = hoverPosition.line;

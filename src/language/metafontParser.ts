@@ -518,6 +518,14 @@ export class MetafontParser {
         };
         inputs.push(input);
 
+        // Ignore anything that was identified as a token where the filename/path is.
+        let nextTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i+1]);
+        while (nextTokenRange.end.line === lineNum && nextTokenRange.end.character <= endChar) {
+          tokens[i+1][3] |= TokenFlag.ignore;
+          i++;
+          nextTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i+1]);
+        }
+
         // try to include identifiers from input file
         const inputDocumentData = this.documentManager.documentData.get('file://'+inputUri);
         if (inputDocumentData !== undefined) {
