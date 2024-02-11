@@ -2,6 +2,7 @@ import { readFileSync, writeFile } from 'fs';
 import * as vscode from 'vscode';
 import { MfFileManager } from './mfFileManager';
 import * as types from './types';
+import path = require('path');
 
 export function activateProjectFileManager(ctx: vscode.ExtensionContext) {
   const projectFileManager = new ProjectFileManager();
@@ -42,7 +43,12 @@ export class ProjectFileManager {
         this.mfFileManager.callRefreshCallbacks();
       }
       if (this.mfFileManager !== undefined && data.defaultJobPath !== undefined) {
-        this.mfFileManager.setDefaultJobPath(data.defaultJobPath);
+        let relDefaultJobPath = data.defaultJobPath;
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (workspaceFolders !== undefined) {
+          relDefaultJobPath = path.resolve(workspaceFolders[0].uri.path, relDefaultJobPath);
+        }
+        this.mfFileManager.setDefaultJobPath(relDefaultJobPath);
       }
       this.updateProjectFile(); // apply changes (e.g. remove files which no longer exist)
     }
@@ -61,9 +67,15 @@ export class ProjectFileManager {
           categoryIds: categoryIds
         };
       }).filter((pf) => pf.categoryIds.length > 0);
-  
+
+      let relDefaultJobPath: string | undefined;
+      if (this.mfFileManager.defaultJobPath === undefined) {
+        relDefaultJobPath = undefined;
+      } else {
+        relDefaultJobPath = vscode.workspace.asRelativePath(this.mfFileManager.defaultJobPath);
+      }
       const jsonStr = JSON.stringify({
-        defaultJobPath: this.mfFileManager.defaultJobPath,
+        defaultJobPath: relDefaultJobPath,
         mfFiles: mfFiles
       });
       const filePath = vscode.Uri.joinPath(workspaceFolders[0].uri, '.mf-project');
