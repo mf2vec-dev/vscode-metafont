@@ -4,6 +4,7 @@ import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Declaration, Definition } from 'vscode-languageserver/node';
 import * as sparks from './sparks.json';
 
+import { existsSync } from 'node:fs';
 import {
   Input,
   MetafontDocumentManager, SemanticToken, TokenData, TokenFlag, TokenType
@@ -495,7 +496,10 @@ export class MetafontParser {
         if (filenameMatch === null || filenameMatch.indices === undefined) {
           break;
         }
-        const inputUri = path.resolve(filenameMatch[1]);
+        let inputUri = path.resolve(filenameMatch[1]);
+        if (!inputUri.endsWith('.mf') && !existsSync(inputUri) && existsSync(inputUri + '.mf')) {
+          inputUri += '.mf';
+        }
         const startChar = inputTokenRange.end.character + filenameMatch.indices[1][0];
         const endChar = inputTokenRange.end.character + filenameMatch.indices[1][1];
         const startPos = {character: startChar, line: lineNum};

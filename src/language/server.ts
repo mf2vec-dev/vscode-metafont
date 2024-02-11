@@ -14,7 +14,6 @@ import {
   SemanticTokensParams
 } from 'vscode-languageserver/node';
 
-import { existsSync } from 'node:fs';
 import { DocumentData, MetafontDocumentManager, TokenType } from './metafontDocumentManager';
 import { numericTokenPattern } from './regexes';
 import { Position, TextDocument } from 'vscode-languageserver-textdocument';
@@ -235,13 +234,9 @@ function getInputLinkLocations(document: TextDocument, documentData: DocumentDat
   );
   if (link !== undefined) {
     // If Location instead of LocationLink is provided, the characters underlined while pressing Ctrl (highlight for Ctrl+Click) are determined by vscode.LanguageConfiguration's wordPattern.
-    let inputUri = link.inputUri;
-    if (!inputUri.endsWith('.mf') && !existsSync(inputUri)) {
-      inputUri += '.mf';
-    }
     const locationLink: LocationLink = {
       originSelectionRange: link.range,
-      targetUri: inputUri,
+      targetUri: link.inputUri,
       targetRange: {
         start: {
           line: 0,
