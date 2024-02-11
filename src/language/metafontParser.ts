@@ -523,6 +523,9 @@ export class MetafontParser {
         while (nextTokenRange.end.line === lineNum && nextTokenRange.end.character <= endChar) {
           tokens[i+1][3] |= TokenFlag.ignore;
           i++;
+          if (i+1 >= tokens.length) {
+            break;
+          }
           nextTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i+1]);
         }
 
