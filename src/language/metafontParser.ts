@@ -591,7 +591,6 @@ export class MetafontParser {
           }
         }, []);
         const hover = nestedBlockInfo.bodyTexts!.reduce<string>((hover, bodyTextInfo) => {
-          // todo maybe better combination, e.g.
           if (hover.length > 0) {
             hover += '\n';
           }
@@ -601,10 +600,25 @@ export class MetafontParser {
             return hover + 'unknown';
           }
         }, '');
+        let tokenType: TokenType | undefined;
+        if ((nestedBlockInfo.bodyTexts!).length === 1) {
+          tokenType = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.tokenType;
+        };
+        let declarationType: DeclarationType | undefined;
+        if ((nestedBlockInfo.bodyTexts!).length === 1) {
+          declarationType = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.declarationType;
+        };
+        let replacement: TokenRef | undefined;
+        if ((nestedBlockInfo.bodyTexts!).length === 1) {
+          replacement = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.replacement;
+        };
         const identifierInfo: IdentifierInfo = {
           declarationTokens: declarationTokens,
           definitionTokens: definitionTokens,
-          hover: hover
+          hover: hover,
+          tokenType: tokenType,
+          declarationType: declarationType,
+          replacement: replacement,
         };
         identifiers.set(identifierName, identifierInfo);
       }
