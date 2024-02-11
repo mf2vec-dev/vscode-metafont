@@ -1,6 +1,6 @@
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { Connection, Declaration, Definition, Diagnostic, DiagnosticSeverity, DiagnosticTag, Position, Range, TextDocuments, URI } from 'vscode-languageserver/node';
-import { MetafontParser } from './metafontParser';
+import { IdentifierInfo, MetafontParser } from './metafontParser';
 import { joinRegexes, nonAsciiCharPattern, numericTokenPattern, symbolicTokenPattern } from './regexes';
 
 
@@ -48,6 +48,7 @@ export interface DocumentData {
   declarations: Map<number, Declaration>;
   definitions: Map<number, Definition>
   inputs: Input[];
+  identifiersAtEnd: Map<string, IdentifierInfo>;
 };
 
 const tokenPattern = joinRegexes([
@@ -79,7 +80,8 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
       semanticTokens: new Map<number, SemanticToken>(),
       declarations: new Map<number, Declaration>(),
       definitions: new Map<number, Definition>(),
-      inputs: []
+      inputs: [],
+      identifiersAtEnd: new Map<string, IdentifierInfo>()
     });
     const parser = new MetafontParser(this);
     parser.parseDocument(document);

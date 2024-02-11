@@ -55,9 +55,12 @@ enum DeclarationType {
   'def'
 }
 
-type TokenRef = { idx: number }; // todo
+type TokenRef = {
+  filePath: string;
+  idx: number;
+};
 
-type IdentifierInfo = {
+export type IdentifierInfo = {
   declarationTokens: TokenRef[],
   definitionTokens: TokenRef[],
   hover: string,
@@ -110,9 +113,9 @@ export class MetafontParser {
       this.handleNotReachable(parseMode, tokens, i);
       const origTokenStr = this.getTokenStr(textDocument, i)!; // cannot be undefined due to loop condition
 
-      const replacedTokenStr = this.replaceTokenStr(identifiers, origTokenStr, textDocument);
+      const replacedTokenStr = this.replaceTokenStr(identifiers, origTokenStr);
 
-      this.applyParserResults(i, origTokenStr, identifiers, semanticHovers, textDocument, declarations, definitions, semanticTokens);
+      this.applyParserResults(i, origTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens);
       let hoverStr: string;
 
       switch (replacedTokenStr) {
@@ -262,7 +265,7 @@ export class MetafontParser {
           }
           const declaredVariableRepresentation = declaredVariableParts.join('.');
           identifiers.set(declaredVariableRepresentation, {
-            declarationTokens: [ { idx: i - 1 } ], // token before ; or , which broke the loop
+            declarationTokens: [ { filePath: textDocument.uri, idx: i - 1 } ], // token before ; or , which broke the loop
             definitionTokens: [], // type declarations only declare
             hover: `${replacedTokenStr} ${declaredVariableRepresentation}`
           });
@@ -292,10 +295,10 @@ export class MetafontParser {
         this.handleNotReachable(parseMode, tokens, i + 3); // right hand token
         this.handleNotReachable(parseMode, tokens, i + 4); // ;
         let identifierInfo: IdentifierInfo = {
-          declarationTokens: [{ idx: i + 1 }],
-          definitionTokens: [{ idx: i + 1 }], // todo maybe use definition of replacement ?
+          declarationTokens: [{ filePath: textDocument.uri, idx: i + 1 }],
+          definitionTokens: [{ filePath: textDocument.uri, idx: i + 1 }], // todo maybe use definition of replacement ?
           hover: `let ${leftHandTokenStr} = ${rightHandTokenStr};`,
-          replacement: { idx: i + 3 }
+          replacement: { filePath: textDocument.uri, idx: i + 3 }
         };
         const rightHandHover = identifiers.get(rightHandTokenStr);
         if (rightHandHover !== undefined) {
@@ -305,7 +308,7 @@ export class MetafontParser {
 
         // semantic highlighting for tokens defined by let
         let tokenType: TokenType | undefined = undefined;
-        const rightHandReplacedTokenStr = this.replaceTokenStr(identifiers, rightHandTokenStr, textDocument);
+        const rightHandReplacedTokenStr = this.replaceTokenStr(identifiers, rightHandTokenStr);
         if (keywordPattern.test(rightHandReplacedTokenStr)) {
           tokenType = TokenType.keyword;
         } else if (identifiers.has(rightHandTokenStr) && identifiers.get(rightHandTokenStr)!.tokenType) {
@@ -317,8 +320,8 @@ export class MetafontParser {
         if (['(', ')'].includes(rightHandTokenStr)) { // [The METAFONTbook, p 218]
           tokens[i + 3][3] |= TokenFlag.letRightHandSideDelimiterP218;
         }
-        this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, textDocument, declarations, definitions, semanticTokens); // left hand
-        this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, textDocument, declarations, definitions, semanticTokens); // right hand
+        this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens); // left hand
+        this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens); // right hand
         i += 4;
         break;
       case 'def':
@@ -436,8 +439,8 @@ export class MetafontParser {
           break;
         }
         identifiers.set(declaredVariableStr, {
-          declarationTokens: [{ idx: declaredVariableI }],
-          definitionTokens: [{ idx: declaredVariableI }],
+          declarationTokens: [{ filePath: textDocument.uri, idx: declaredVariableI }],
+          definitionTokens: [{ filePath: textDocument.uri, idx: declaredVariableI }],
           hover: hoverStr,
           tokenType: TokenType.function
         });
@@ -458,8 +461,8 @@ export class MetafontParser {
         this.handleNotReachable(parseMode, tokens, i + 3);
         hoverStr = `${replacedTokenStr} ${leftParameterTokenStr} ${leveldevSymbolicTokenStr} ${rightParameterTokenStr}`;
         identifiers.set(leveldevSymbolicTokenStr, {
-          declarationTokens: [{ idx: i + 2 }],
-          definitionTokens: [{ idx: i + 2 }],
+          declarationTokens: [{ filePath: textDocument.uri, idx: i + 2 }],
+          definitionTokens: [{ filePath: textDocument.uri, idx: i + 2 }],
           hover: hoverStr,
           tokenType: TokenType.function
         });
@@ -511,10 +514,19 @@ export class MetafontParser {
           },
           inputUri: inputUri
         };
-        inputs.push(input); // links since this is handled separately than declarations (as definitions for Ctrl+Click)
+        inputs.push(input);
+
+        // try to include identifiers from input file
+        const inputDocumentData = this.documentManager.documentData.get('file://'+inputUri);
+        if (inputDocumentData !== undefined) {
+          identifiers = new Map<string, IdentifierInfo>([...identifiers, ...inputDocumentData.identifiersAtEnd]);
+        }
         break;
       }
     }
+
+    // Save identifiers in case this file is input.
+    documentData.identifiersAtEnd = identifiers;
   }
 
   private handleNotReachable(parseMode: ParseMode, tokens: TokenData[], i: number) {
@@ -607,28 +619,32 @@ export class MetafontParser {
     return parseMode;
   }
 
-  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, textDocument: TextDocument, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>) {
+  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>) {
     this.addSemanticInfo(i, origTokenStr, identifiers, semanticHovers);
-    this.addTokenLocationLinks(textDocument, i, origTokenStr, identifiers, declarations, "declarationTokens");
-    this.addTokenLocationLinks(textDocument, i, origTokenStr, identifiers, definitions, "definitionTokens");
+    this.addTokenLocationLinks(i, origTokenStr, identifiers, declarations, "declarationTokens");
+    this.addTokenLocationLinks(i, origTokenStr, identifiers, definitions, "definitionTokens");
     this.addSemanticToken(i, origTokenStr, identifiers, semanticTokens);
   }
 
-  private replaceTokenStr(identifiers: Map<string, IdentifierInfo>, replacedTokenStr: string, textDocument: TextDocument) {
+  private replaceTokenStr(identifiers: Map<string, IdentifierInfo>, replacedTokenStr: string) {
     let i = 0;
     const imax = 100; // limit
     while (identifiers.has(replacedTokenStr) && i < imax) {
       identifiers.get(replacedTokenStr)!.declarationType === DeclarationType.let;
       const replacement = identifiers.get(replacedTokenStr)!.replacement;
-      if (replacement) {
-        let newTokenStr = this.getTokenStr(textDocument, replacement.idx);
-        if (newTokenStr && newTokenStr !== replacedTokenStr) {
-          replacedTokenStr = newTokenStr;
-          i++;
-          continue;
-        }
+      if (replacement === undefined) {
+        break;
       }
-      break;
+      const uri = replacement.filePath;
+      const textDocument = this.documentManager.get(uri);
+      if (textDocument === undefined) {
+        break;
+      }
+      const newTokenStr = this.getTokenStr(textDocument, replacement.idx);
+      if (newTokenStr && newTokenStr !== replacedTokenStr) {
+        replacedTokenStr = newTokenStr;
+        i++;
+      }
     }
     return replacedTokenStr;
   }
@@ -639,21 +655,26 @@ export class MetafontParser {
       semanticHovers.set(i, identifierInfo.hover);
     }
   }
-  private addTokenLocationLinks(textDocument: TextDocument, i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, declarationsOrDefinitions: Map<number, Declaration | Definition>, key: "declarationTokens" | "definitionTokens" ) {
+  private addTokenLocationLinks(i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, declarationsOrDefinitions: Map<number, Declaration | Definition>, key: "declarationTokens" | "definitionTokens" ) {
     const identifierInfo = identifiers.get(tokenStr);
-    const uri = textDocument.uri;
-    const documentData = this.documentManager.documentData.get(uri);
-    if (identifierInfo !== undefined && documentData !== undefined) {
-      const tokenLocationLinks: Declaration | Definition = [];
-      for (const declarationOrDeclarationToken of identifierInfo[key]) {
-        const declarationOrDefinitionTokenData = documentData.tokens[declarationOrDeclarationToken.idx];
-        tokenLocationLinks.push({
-          uri: uri,
-          range: this.documentManager.getTokenRange(textDocument, declarationOrDefinitionTokenData)
-        });
-      }
-      declarationsOrDefinitions.set(i, tokenLocationLinks);
+    if (identifierInfo === undefined) {
+      return;
     }
+    const tokenLocationLinks: Declaration | Definition = [];
+    for (const declarationOrDeclarationToken of identifierInfo[key]) {
+      const uri = declarationOrDeclarationToken.filePath;
+      const documentData = this.documentManager.documentData.get(uri);
+      const textDocument = this.documentManager.get(uri);
+      if (textDocument === undefined || documentData === undefined) {
+        continue;
+      }
+      const declarationOrDefinitionTokenData = documentData.tokens[declarationOrDeclarationToken.idx];
+      tokenLocationLinks.push({
+        uri: uri,
+        range: this.documentManager.getTokenRange(textDocument, declarationOrDefinitionTokenData)
+      });
+    }
+    declarationsOrDefinitions.set(i, tokenLocationLinks);
   }
   private addSemanticToken(i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticTokens: Map<number, SemanticToken>, ) {
     const identifierInfo = identifiers.get(tokenStr);
