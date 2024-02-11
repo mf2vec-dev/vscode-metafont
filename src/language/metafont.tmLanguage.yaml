@@ -278,13 +278,13 @@ patterns:
   - name: keyword.control.conditional.metafont
     match: !join [
       *letterTokenLb,
-      '(?:if|else|elseif|fi)',
+      '(?:if|else(?:if)?|fi)',
       *letterTokenRb
     ]
   - name: keyword.control.loop.metafont
     match: !join [
       *letterTokenLb,
-      '(?:for|forsuffixes|forever|exitif|endfor)',
+      '(?:for(?:suffixes|ever)?|exitif|endfor)',
       *letterTokenRb
     ]
   # symbolic operators
@@ -442,9 +442,9 @@ patterns:
     match: !join [
       *letterTokenLb,
       '(?:',
-        'tracingtitles|tracingequations|tracingcapsules|tracingchoices|tracingspecs|tracingpens|tracingcommands|tracingrestores|tracingmacros|tracingedges|tracingoutput|tracingonline|tracingstats',
+        'tracing(?:titles|equations|capsules|choices|specs|pens|commands|restores|macros|edges|output|online|stats)',
         '|pausing|showstopping|fontmaking|proofing|turningcheck|warningcheck|smoothing|autorounding|granularity|fillin|year|month|day|time',
-        '|charcode|charext|charwd|charht|chardp|charic|chardx|chardy|designsize|hppp|vppp|xoffset|yoffset|boundarychar',
+        '|char(?:code|ext|wd|ht|dp|ic|dx|dy)|designsize|hppp|vppp|xoffset|yoffset|boundarychar',
       ')',
       *letterTokenRb
     ]
