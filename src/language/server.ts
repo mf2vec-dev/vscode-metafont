@@ -10,6 +10,7 @@ import {
   MarkupContent,
   MarkupKind,
   Range,
+  SemanticTokens,
   SemanticTokensBuilder,
   SemanticTokensParams
 } from 'vscode-languageserver/node';
@@ -130,19 +131,32 @@ connection.languages.semanticTokens.on((semanticTokensParams: SemanticTokensPara
   const semanticTokenBuilder = new SemanticTokensBuilder();
   if (document !== undefined && documentData !== undefined) {
     for (const tokenIdx of documentData.semanticTokens.keys()) {
-      const semanticToken = documentData.semanticTokens.get(tokenIdx);
-      if (semanticToken?.tokenType !== undefined) {
-        const tokenData = documentData.tokens[tokenIdx];
-        const position = document.positionAt(tokenData[0]);
-        const line = position.line;
-        const char = position.character;
-        const tokenType = tokenTypeList.indexOf(semanticToken.tokenType);
-        semanticTokenBuilder.push(line, char, tokenData[1], tokenType, 0);
+      const tokenData = documentData.tokens[tokenIdx];
+      if (tokenData === undefined || (tokenData[3] && TokenFlag.ignore === TokenFlag.ignore)) {
+        continue;
       }
+      const semanticToken = documentData.semanticTokens.get(tokenIdx);
+      if (semanticToken?.tokenType === undefined) {
+        continue;
+      }
+      const position = document.positionAt(tokenData[0]);
+      const line = position.line;
+      const char = position.character;
+      const tokenType = tokenTypeList.indexOf(semanticToken.tokenType);
+      semanticTokenBuilder.push(line, char, tokenData[1], tokenType, 0);
+      // semanticTokenBuilder.push(line, char+2, 2, tokenTypeList.indexOf(TokenType.string), 0);
+    }
+
+    // Ensure the file name of inputs are strings (e.g. let generate=input;)
+    for (const input of documentData.inputs) {
+      const line = input.range.start.line;
+      const char = input.range.start.character;
+      const length = input.range.end.character - input.range.start.character;
+      semanticTokenBuilder.push(line, char, length, tokenTypeList.indexOf(TokenType.string), 0);
     }
   }
   const tokens = semanticTokenBuilder.build();
-  return tokens;
+  return sortSemanticTokens(tokens);
 });
 connection.onDefinition((definitionParams: DefinitionParams) => {
   const uri = definitionParams.textDocument.uri;
@@ -192,6 +206,47 @@ documentManager.listen(connection);
 
 connection.listen();
 
+
+/**
+ * VSCode seems to have problems with token data which is not ordered
+ * (i.e. negative numbers in elements representing the line difference).
+ * As a workaround, we sort tokens.data by line so there are no negative values.
+ */
+function sortSemanticTokens(tokens: SemanticTokens): SemanticTokens {
+  const tokenDataSplitted = Array.from<unknown, number[]>(
+    { length: tokens.data.length / 5 },
+    (_, i) => tokens.data.slice(i * 5, (i + 1) * 5)
+  );
+  // make abs line and char number
+  const tokenDataSplittedAbs = tokenDataSplitted.reduce<number[][]>(
+    (accumulator, currentValue, currentIndex) => {
+      accumulator.push([
+        currentIndex === 0 ? currentValue[0] : currentValue[0] + accumulator[currentIndex - 1][0],
+        ...currentValue.slice(1)
+      ]);
+      return accumulator;
+    },
+    []
+  );
+  tokenDataSplittedAbs.sort((a, b) => a[0] - b[0]);
+  // turn back into differences
+  const tokenDataSplittedSorted = tokenDataSplittedAbs.reduce<number[][]>(
+    (accumulator, currentValue, currentIndex) => {
+      accumulator.push([
+        currentIndex === 0 ? currentValue[0] : currentValue[0] - tokenDataSplittedAbs[currentIndex - 1][0],
+        ...currentValue.slice(1)
+      ]);
+      return accumulator;
+    },
+    []
+  );
+  // Build the SemanticTokens object with the sorted data reusing the resultId.
+  tokens = {
+    data: tokenDataSplittedSorted.flat(),
+    resultId: tokens.resultId
+  };
+  return tokens;
+}
 
 function addNumericAdditionalInformation(numTokenStr: string) {
   // this assumes value of token >= 0

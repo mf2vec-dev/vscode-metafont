@@ -31,6 +31,7 @@ export enum TokenType {
   parameter = 'parameter',
   operator = 'operator',
   keyword = 'keyword',
+  string = 'string',
 };
 
 export type TokenData = [start: number, length: number, tokenKind: TokenKind, tokenFlag: TokenFlag];
