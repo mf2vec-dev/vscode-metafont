@@ -15,8 +15,9 @@ import {
 } from 'vscode-languageserver/node';
 
 import { existsSync } from 'node:fs';
-import { MetafontDocumentManager, TokenType } from './metafontDocumentManager';
+import { DocumentData, MetafontDocumentManager, TokenType } from './metafontDocumentManager';
 import { numericTokenPattern } from './regexes';
+import { Position, TextDocument } from 'vscode-languageserver-textdocument';
 
 
 const serverName = 'METAFONT Language Server';
@@ -149,41 +150,13 @@ connection.onDefinition((definitionParams: DefinitionParams) => {
   const document = documentManager.get(uri);
   const documentData = documentManager.documentData.get(uri);
   if (document !== undefined && documentData !== undefined) {
-    const link = documentData.inputs.find((link) =>
-      // on same line and between start and end
-      link.range.start.line === definitionParams.position.line
-      && definitionParams.position.line === link.range.end.line
-      && link.range.start.character <= definitionParams.position.character
-      && definitionParams.position.character <= link.range.end.character
-    );
-    if (link !== undefined) {
-      // If Location instead of LocationLink is provided, the characters underlined while pressing Ctrl (highlight for Ctrl+Click) are determined by vscode.LanguageConfiguration's wordPattern.
-      let inputUri = link.inputUri;
-      if (!inputUri.endsWith('.mf') && !existsSync(inputUri)) {
-        inputUri += '.mf';
-      }
-      const locationLink: LocationLink = {
-        originSelectionRange: link.range,
-        targetUri: inputUri,
-        targetRange: {
-          start: {
-            line: 0,
-            character: 0
-          },
-          end: {
-            line: 0,
-            character: 0
-          }
-        },
-        targetSelectionRange: {
-          start: {
-            line: 0,
-            character: 0
-          },
-          end: document.positionAt(document.getText().length)
-        }
-      };
-      return [ locationLink ];
+    const inputLinkLocations = getInputLinkLocations(document, documentData, definitionParams.position);
+    if (inputLinkLocations !== undefined) {
+      return inputLinkLocations;
+    }
+    const tokenIdx = documentManager.getTokenIdxAtPosition(document, definitionParams.position);
+    if (tokenIdx !== undefined && tokenIdx >= 0) {
+      return documentData.definitions.get(tokenIdx);
     }
   }
 });
@@ -192,6 +165,10 @@ connection.onDeclaration((declarationParams: DeclarationParams) => {
   const document = documentManager.get(uri);
   const documentData = documentManager.documentData.get(uri);
   if (document !== undefined && documentData !== undefined) {
+    const inputLinkLocations = getInputLinkLocations(document, documentData, declarationParams.position);
+    if (inputLinkLocations !== undefined) {
+      return inputLinkLocations;
+    }
     const tokenIdx = documentManager.getTokenIdxAtPosition(document, declarationParams.position);
     if (tokenIdx !== undefined && tokenIdx >= 0) {
       return documentData.declarations.get(tokenIdx);
@@ -248,3 +225,41 @@ function metafontNumericRepresentationExplanation(num: number, forceOutput = fal
   return additionalInformation;
 }
 
+function getInputLinkLocations(document: TextDocument, documentData: DocumentData, position: Position) {
+  const link = documentData.inputs.find((link) =>
+    // on same line and between start and end
+    link.range.start.line === position.line
+    && position.line === link.range.end.line
+    && link.range.start.character <= position.character
+    && position.character <= link.range.end.character
+  );
+  if (link !== undefined) {
+    // If Location instead of LocationLink is provided, the characters underlined while pressing Ctrl (highlight for Ctrl+Click) are determined by vscode.LanguageConfiguration's wordPattern.
+    let inputUri = link.inputUri;
+    if (!inputUri.endsWith('.mf') && !existsSync(inputUri)) {
+      inputUri += '.mf';
+    }
+    const locationLink: LocationLink = {
+      originSelectionRange: link.range,
+      targetUri: inputUri,
+      targetRange: {
+        start: {
+          line: 0,
+          character: 0
+        },
+        end: {
+          line: 0,
+          character: 0
+        }
+      },
+      targetSelectionRange: {
+        start: {
+          line: 0,
+          character: 0
+        },
+        end: document.positionAt(document.getText().length)
+      }
+    };
+    return [ locationLink ];
+  }
+}

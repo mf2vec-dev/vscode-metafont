@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as _ from 'lodash';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Declaration } from 'vscode-languageserver/node';
+import { Declaration, Definition } from 'vscode-languageserver/node';
 import * as sparks from './sparks.json';
 
 import {
@@ -58,6 +58,7 @@ type TokenRef = { idx: number }; // todo
 
 type IdentifierInfo = {
   declarationTokens: TokenRef[],
+  definitionTokens: TokenRef[],
   hover: string,
   tokenType?: TokenType,
   declarationType?: DeclarationType,
@@ -88,6 +89,7 @@ export class MetafontParser {
     const semanticHovers = documentData.semanticHovers;
     const semanticTokens = documentData.semanticTokens;
     const declarations = documentData.declarations;
+    const definitions = documentData.definitions;
     const inputs = documentData.inputs;
 
     let identifiers = new Map<string, IdentifierInfo>();
@@ -109,7 +111,7 @@ export class MetafontParser {
 
       const replacedTokenStr = this.replaceTokenStr(identifiers, origTokenStr, textDocument);
 
-      this.applyParserResults(i, origTokenStr, identifiers, semanticHovers, textDocument, declarations, semanticTokens);
+      this.applyParserResults(i, origTokenStr, identifiers, semanticHovers, textDocument, declarations, definitions, semanticTokens);
       let hoverStr: string;
 
       switch (replacedTokenStr) {
@@ -260,6 +262,7 @@ export class MetafontParser {
           const declaredVariableRepresentation = declaredVariableParts.join('.');
           identifiers.set(declaredVariableRepresentation, {
             declarationTokens: [ { idx: i - 1 } ], // token before ; or , which broke the loop
+            definitionTokens: [], // type declarations only declare
             hover: `${replacedTokenStr} ${declaredVariableRepresentation}`
           });
           if (endOfDeclarationList) {
@@ -289,6 +292,7 @@ export class MetafontParser {
         this.handleNotReachable(parseMode, tokens, i + 4); // ;
         let identifierInfo: IdentifierInfo = {
           declarationTokens: [{ idx: i + 1 }],
+          definitionTokens: [{ idx: i + 1 }], // todo maybe use definition of replacement ?
           hover: `let ${leftHandTokenStr} = ${rightHandTokenStr};`,
           replacement: { idx: i + 3 }
         };
@@ -312,8 +316,8 @@ export class MetafontParser {
         if (['(', ')'].includes(rightHandTokenStr)) { // [The METAFONTbook, p 218]
           tokens[i + 3][3] |= TokenFlag.letRightHandSideDelimiterP218;
         }
-        this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, textDocument, declarations, semanticTokens); // left hand
-        this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, textDocument, declarations, semanticTokens); // right hand
+        this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, textDocument, declarations, definitions, semanticTokens); // left hand
+        this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, textDocument, declarations, definitions, semanticTokens); // right hand
         i += 4;
         break;
       case 'def':
@@ -432,6 +436,7 @@ export class MetafontParser {
         }
         identifiers.set(declaredVariableStr, {
           declarationTokens: [{ idx: declaredVariableI }],
+          definitionTokens: [{ idx: declaredVariableI }],
           hover: hoverStr,
           tokenType: TokenType.function
         });
@@ -453,6 +458,7 @@ export class MetafontParser {
         hoverStr = `${replacedTokenStr} ${leftParameterTokenStr} ${leveldevSymbolicTokenStr} ${rightParameterTokenStr}`;
         identifiers.set(leveldevSymbolicTokenStr, {
           declarationTokens: [{ idx: i + 2 }],
+          definitionTokens: [{ idx: i + 2 }],
           hover: hoverStr,
           tokenType: TokenType.function
         });
@@ -546,6 +552,13 @@ export class MetafontParser {
             return tokenRefs;
           }
         }, []);
+        const definitionTokens = nestedBlockInfo.bodyTexts!.reduce<TokenRef[]>((tokenRefs, bodyTextInfo) => {
+          if (bodyTextInfo.identifiers!.has(identifierName)) {
+            return [...tokenRefs, ...bodyTextInfo.identifiers!.get(identifierName)!.definitionTokens];
+          } else {
+            return tokenRefs;
+          }
+        }, []);
         const hover = nestedBlockInfo.bodyTexts!.reduce<string>((hover, bodyTextInfo) => {
           // todo maybe better combination, e.g.
           if (hover.length > 0) {
@@ -559,6 +572,7 @@ export class MetafontParser {
         }, '');
         const identifierInfo: IdentifierInfo = {
           declarationTokens: declarationTokens,
+          definitionTokens: definitionTokens,
           hover: hover
         };
         identifiers.set(identifierName, identifierInfo);
@@ -589,9 +603,10 @@ export class MetafontParser {
     return parseMode;
   }
 
-  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, textDocument: TextDocument, declarations: Map<number, Declaration>, semanticTokens: Map<number, SemanticToken>) {
+  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, textDocument: TextDocument, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>) {
     this.addSemanticInfo(i, origTokenStr, identifiers, semanticHovers);
-    this.addTokenDeclarations(textDocument, i, origTokenStr, identifiers, declarations);
+    this.addTokenLocationLinks(textDocument, i, origTokenStr, identifiers, declarations, "declarationTokens");
+    this.addTokenLocationLinks(textDocument, i, origTokenStr, identifiers, definitions, "definitionTokens");
     this.addSemanticToken(i, origTokenStr, identifiers, semanticTokens);
   }
 
@@ -620,20 +635,20 @@ export class MetafontParser {
       semanticHovers.set(i, identifierInfo.hover);
     }
   }
-  private addTokenDeclarations(textDocument: TextDocument, i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, declarations: Map<number, Declaration>, ) {
+  private addTokenLocationLinks(textDocument: TextDocument, i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, declarationsOrDefinitions: Map<number, Declaration | Definition>, key: "declarationTokens" | "definitionTokens" ) {
     const identifierInfo = identifiers.get(tokenStr);
     const uri = textDocument.uri;
     const documentData = this.documentManager.documentData.get(uri);
     if (identifierInfo !== undefined && documentData !== undefined) {
-      const tokenDeclarations: Declaration = [];
-      for (const declarationToken of identifierInfo.declarationTokens) {
-        const declarationTokenData = documentData.tokens[declarationToken.idx];
-        tokenDeclarations.push({
+      const tokenLocationLinks: Declaration | Definition = [];
+      for (const declarationOrDeclarationToken of identifierInfo[key]) {
+        const declarationOrDefinitionTokenData = documentData.tokens[declarationOrDeclarationToken.idx];
+        tokenLocationLinks.push({
           uri: uri,
-          range: this.documentManager.getTokenRange(textDocument, declarationTokenData)
+          range: this.documentManager.getTokenRange(textDocument, declarationOrDefinitionTokenData)
         });
       }
-      declarations.set(i, tokenDeclarations);
+      declarationsOrDefinitions.set(i, tokenLocationLinks);
     }
   }
   private addSemanticToken(i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticTokens: Map<number, SemanticToken>, ) {
