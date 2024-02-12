@@ -5,6 +5,7 @@ import { Declaration, Definition } from 'vscode-languageserver/node';
 import * as sparks from './sparks.json';
 
 import { existsSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 import {
   Input,
   MetafontDocumentManager, SemanticToken, TokenData, TokenFlag, TokenType
@@ -501,10 +502,11 @@ export class MetafontParser {
         if (filenameMatch === null || filenameMatch.indices === undefined) {
           break;
         }
-        let inputUri = path.resolve(filenameMatch[1]);
-        if (!inputUri.endsWith('.mf') && !existsSync(inputUri) && existsSync(inputUri + '.mf')) {
-          inputUri += '.mf';
+        let inputPath = path.resolve(filenameMatch[1]);
+        if (!inputPath.endsWith('.mf') && !existsSync(inputPath) && existsSync(inputPath + '.mf')) {
+          inputPath += '.mf';
         }
+        const inputUri = pathToFileURL(inputPath).toString();
         const startChar = inputTokenRange.end.character + filenameMatch.indices[1][0];
         const endChar = inputTokenRange.end.character + filenameMatch.indices[1][1];
         const startPos = {character: startChar, line: lineNum};
@@ -532,7 +534,7 @@ export class MetafontParser {
         }
 
         // try to include identifiers from input file
-        const inputDocumentData = this.documentManager.documentData.get('file://'+inputUri);
+        const inputDocumentData = this.documentManager.documentData.get(inputUri);
         if (inputDocumentData !== undefined) {
           identifiers = new Map<string, IdentifierInfo>([...identifiers, ...inputDocumentData.identifiersAtEnd]);
         }
