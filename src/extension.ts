@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 
+import { LanguageClient } from 'vscode-languageclient/node';
 import { activateMfCommands } from './base/mfCommands';
 import { activateMfFileManager, MfFileManager } from './base/mfFileManager';
 import { activateMfFilesView } from './base/mfFilesTreeView';
@@ -30,7 +31,7 @@ export let debugAdapterFactory: InlineDebugAdapterFactory;
 export let debugExpressionPreviewWebviewViewManager: DebugExpressionPreviewWebviewViewManager;
 
 export async function activate(ctx: vscode.ExtensionContext) {
-  activateLanguageFeatures(ctx);
+  const languageClient = activateLanguageFeatures(ctx);
   activateActiveFileWatchers(ctx);
 
   const projectFileManager = activateProjectFileManager(ctx);
@@ -39,7 +40,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
   activateMfCommands(ctx, mfFileManager);
 
   // views
-  activateActivityBarViews(ctx, mfFileManager, projectFileManager);
+  activateActivityBarViews(ctx, mfFileManager, languageClient);
   activatePanelViews(ctx, mfFileManager);
 
   // webview panels
@@ -82,8 +83,8 @@ function activateActiveFileWatchers(ctx: vscode.ExtensionContext) {
   );
 }
 
-async function activateActivityBarViews(ctx: vscode.ExtensionContext, mfFileManager: MfFileManager, projectFileManager: ProjectFileManager) {
-  activateMfFilesView(ctx, mfFileManager, projectFileManager);
+async function activateActivityBarViews(ctx: vscode.ExtensionContext, mfFileManager: MfFileManager, languageClient: LanguageClient) {
+  activateMfFilesView(ctx, mfFileManager, languageClient);
   new GlyphTableWebviewViewManager(ctx, mfFileManager);
   new KerningTableWebviewViewManager(ctx, mfFileManager);
   new LigatureTableWebviewViewManager(ctx, mfFileManager);

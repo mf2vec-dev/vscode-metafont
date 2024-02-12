@@ -189,6 +189,43 @@ connection.onDeclaration((declarationParams: DeclarationParams) => {
   }
 });
 
+export type MfInputsRequestArgs = { uri: string };
+export type MfInputsRequestInput = { uri: string };
+export type MfInputsResponse = { inputs: MfInputsRequestInput[], inputtedBy: MfInputsRequestInput[] };
+
+export type OpenTextDocumentRequestArgs = { uri: string };
+export type OpenTextDocumentResponse = void;
+
+connection.onRequest('MfInputsRequest', async (args: MfInputsRequestArgs): Promise<MfInputsResponse> => {
+  const mfInputResponse: MfInputsResponse = {
+    inputs: [],
+    inputtedBy: []
+  };
+
+  for (let [uri, documentData] of documentManager.documentData) {
+    if (documentData.inputs.map((input) => input.inputUri).includes(args.uri)) {
+      mfInputResponse.inputtedBy.push({ uri: uri });
+    }
+  }
+
+  let documentData = documentManager.documentData.get(args.uri);
+  if (documentData === undefined) {
+    // try to get the document
+    const openTextDocumentRequestArgs: OpenTextDocumentRequestArgs = { uri: args.uri };
+    await connection.sendRequest<OpenTextDocumentResponse>('OpenTextDocumentRequest', openTextDocumentRequestArgs);
+    // This seems to work. The key seems to be that TextDocuments.onDidChangeContent() makes the server aware of the document before the request's promise is fulfilled.
+    // TODO This is most likely not a good long term solution.
+    documentData = documentManager.documentData.get(args.uri);
+    if (documentData === undefined) {
+      // didn't work
+      // TODO maybe try again after X ms?
+      return mfInputResponse;
+    }
+  }
+  mfInputResponse.inputs = documentData.inputs.map((input) => { return { uri: input.inputUri }; });
+  return mfInputResponse;
+});
+
 documentManager.onDidClose((textDocumentChangeEvent) => {
   // todo
 });

@@ -155,7 +155,7 @@ export type MetafontInputStatement = {
 
 // project files
 
-export type MfFileOrCategory = MfFileCategory | MfFile;
+export type MfFileOrCategory = MfFileCategory | MfFile | MfFileInput;
 export type MfFileCategory = { label: string; id: MfFileCategoryId; };
 export enum MfFileCategoryId { // enum for clarity in .mf-project file
   unknown = 'unknown',
@@ -165,11 +165,20 @@ export enum MfFileCategoryId { // enum for clarity in .mf-project file
   base = 'base'
 };
 export type MfFile = { uri: vscode.Uri; categoryIds: MfFileCategoryId[]; };
+export type MfFileInput = {
+  uri: vscode.Uri;
+  parentUri: vscode.Uri;
+  /** true: this file is inputted somewhere else */
+  inputtedBy: boolean
+};
 export function isMfFileCategory(fileOrCategory: MfFileOrCategory): fileOrCategory is MfFileCategory {
   return 'id' in fileOrCategory;
 }
 export function isMfFile(fileOrCategory: MfFileOrCategory): fileOrCategory is MfFile {
-  return !('id' in fileOrCategory);
+  return 'categoryIds' in fileOrCategory;
+}
+export function isMfFileInput(fileOrCategory: MfFileOrCategory): fileOrCategory is MfFileInput {
+  return 'inputtedBy' in fileOrCategory;
 }
 
 //

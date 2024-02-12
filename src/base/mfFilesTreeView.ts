@@ -1,11 +1,13 @@
+import * as path from 'node:path';
 import * as vscode from 'vscode';
+import { LanguageClient } from 'vscode-languageclient/node';
+import { MfInputsRequestArgs, MfInputsResponse } from '../language/server';
 import { refreshAllFileWebviews } from '../webviews/webviewInteractionMixins';
 import { MfFileManager } from './mfFileManager';
-import { ProjectFileManager } from './projectFileManager';
 import * as types from './types';
 
-export function activateMfFilesView(ctx: vscode.ExtensionContext, mfFileManager: MfFileManager, projectFileManager: ProjectFileManager) {
-  const mfFilesTreeDataProvider = new MfFilesTreeDataProvider(mfFileManager);
+export function activateMfFilesView(ctx: vscode.ExtensionContext, mfFileManager: MfFileManager, languageClient: LanguageClient) {
+  const mfFilesTreeDataProvider = new MfFilesTreeDataProvider(mfFileManager, languageClient);
   mfFileManager.refreshCallbacks.push(() => mfFilesTreeDataProvider.refresh()); // arrow function otherwise this get lost in refresh
 
   // initial fill with all .mf files
@@ -41,8 +43,8 @@ export class MfFilesDecorationProvider {
 }
 
 class MfFilesTreeDataProvider implements vscode.TreeDataProvider<types.MfFileOrCategory> {
-  constructor(public mfFileManager: MfFileManager) {}
-  getChildren(element: types.MfFileCategory): types.MfFileOrCategory[] {
+  constructor(public mfFileManager: MfFileManager, public languageClient: LanguageClient) {}
+  async getChildren(element: types.MfFileOrCategory): Promise<types.MfFileOrCategory[]> {
     if (!element) {
       return MfFileManager.mfFileCategories;
     }
@@ -51,19 +53,56 @@ class MfFilesTreeDataProvider implements vscode.TreeDataProvider<types.MfFileOrC
       children.sort(this.mfFileManager.sortFilesByUri);
       return children;
     }
-    return [];
+
+    const args: MfInputsRequestArgs = { uri: element.uri.toString() };
+    const response: MfInputsResponse = await this.languageClient.sendRequest('MfInputsRequest', args);
+    if (types.isMfFile(element)) {
+      return [
+        ...response.inputs.map((input) => {
+          return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: false };
+        }),
+        ...response.inputtedBy.map((input) => {
+          return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: true };
+        })
+      ];
+    }
+    // if already a MfFileInput, keep the kind of MfFileInput.
+    if (element.inputtedBy) {
+      return response.inputtedBy.map((input) => {
+        return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: true };
+      });
+    }
+    return response.inputs.map((input) => {
+      return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: false };
+    });
   }
-  getTreeItem(element: types.MfFileOrCategory): vscode.TreeItem {
+
+  async getTreeItem(element: types.MfFileOrCategory): Promise<vscode.TreeItem> {
     if (types.isMfFileCategory(element)) {
-      const numChildren = this.getChildren(element).length;
+      const numChildren = (await this.getChildren(element)).length;
       return {
         collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
         description: '(' + numChildren + ')',
         label: element.label
       };
     }
+    if (types.isMfFileInput(element)) {
+      let tooltip: string;
+      if (element.inputtedBy) {
+        tooltip = `${path.basename(element.parentUri.fsPath)} is inputted by ${path.basename(element.uri.fsPath)}`;
+      } else {
+        tooltip = `${path.basename(element.parentUri.fsPath)} is inputting ${path.basename(element.uri.fsPath)}`;
+      }
+      return {
+        collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+        description: true,
+        resourceUri: element.uri,
+        iconPath: new vscode.ThemeIcon(element.inputtedBy ? 'indent' : 'newline'),
+        tooltip: tooltip
+      };
+    }
     return {
-      collapsibleState: vscode.TreeItemCollapsibleState.None,
+      collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
       description: true,
       resourceUri: element.uri,
       contextValue: 'mfFile',

@@ -7,6 +7,7 @@ import {
   TransportKind
 } from 'vscode-languageclient/node';
 import { symbolicOrNumericTokenPattern } from './regexes';
+import { OpenTextDocumentRequestArgs, OpenTextDocumentResponse } from './server';
 import path = require('path');
 
 
@@ -35,7 +36,7 @@ export function activateLanguageFeatures(ctx: vscode.ExtensionContext) {
     })
   );
 
-  startClient(ctx);
+  return startClient(ctx);
 }
 
 function startClient(ctx: vscode.ExtensionContext) {
@@ -65,7 +66,15 @@ function startClient(ctx: vscode.ExtensionContext) {
     clientOptions
   );
 
+  languageClient.onRequest('OpenTextDocumentRequest', async (args: OpenTextDocumentRequestArgs): Promise<OpenTextDocumentResponse> => {
+    // This is probably not the best way to make the server aware of a TextDocument...
+    // Note: openTextDocument doesn't open the document in the GUI.
+    await vscode.workspace.openTextDocument(vscode.Uri.parse(args.uri).path);
+  });
+
   languageClient.start();
+
+  return languageClient;
 }
 
 function specifyLanguageConfiguration() {
