@@ -98,7 +98,12 @@ class MfFilesTreeDataProvider implements vscode.TreeDataProvider<types.MfFileOrC
         description: true,
         resourceUri: element.uri,
         iconPath: new vscode.ThemeIcon(element.inputtedBy ? 'indent' : 'newline'),
-        tooltip: tooltip
+        tooltip: tooltip,
+        command: {
+          title: 'Open',
+          command: 'vscode.open',
+          arguments: [element.uri]
+        }
       };
     }
     return {
