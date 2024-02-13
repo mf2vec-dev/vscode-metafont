@@ -67,9 +67,6 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     super(TextDocument);
     this.connection = connection;
     this.sourceStr = sourceStr;
-    this.onDidClose((textDocumentChangeEvent) => {
-      this.documentData.delete(textDocumentChangeEvent.document.uri);
-    });
     this.onDidChangeContent((textDocumentChangeEvent) => {
       this.updateDocumentData(textDocumentChangeEvent.document);
     });
