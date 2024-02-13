@@ -70,6 +70,15 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     this.onDidChangeContent((textDocumentChangeEvent) => {
       this.updateDocumentData(textDocumentChangeEvent.document);
     });
+    this.listen(connection);
+  }
+  initWithListeningConnection() {
+    // As soon as there is a connection, send a notification which triggers initialization on client side,
+    // e.g. making the server aware of files.
+    // TODO there needs to be a better way than waiting.
+    setTimeout(() => {
+      this.connection.sendNotification('MetafontDocumentManagerStarted');
+    }, 50); // even 1 seems to work, 0 not
   }
   updateDocumentData(document: TextDocument) {
     const tokens = this.tokenize(document.getText());

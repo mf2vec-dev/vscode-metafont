@@ -144,7 +144,6 @@ connection.languages.semanticTokens.on((semanticTokensParams: SemanticTokensPara
       const char = position.character;
       const tokenType = tokenTypeList.indexOf(semanticToken.tokenType);
       semanticTokenBuilder.push(line, char, tokenData[1], tokenType, 0);
-      // semanticTokenBuilder.push(line, char+2, 2, tokenTypeList.indexOf(TokenType.string), 0);
     }
 
     // Ensure the file name of inputs are strings (e.g. let generate=input;)
@@ -226,22 +225,9 @@ connection.onRequest('MfInputsRequest', async (args: MfInputsRequestArgs): Promi
   return mfInputResponse;
 });
 
-documentManager.onDidClose((textDocumentChangeEvent) => {
-  // todo
-});
-documentManager.onDidChangeContent((textDocumentChangeEvent) => {
-  // todo
-  // also called after initialized
-});
-
-// function validateTextDocument(document: TextDocument) {
-//   documentManager.getTokens()
-//   document.uri
-// }
-
-documentManager.listen(connection);
-
 connection.listen();
+
+documentManager.initWithListeningConnection();
 
 
 /**

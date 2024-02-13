@@ -72,6 +72,14 @@ function startClient(ctx: vscode.ExtensionContext) {
     await vscode.workspace.openTextDocument(vscode.Uri.parse(args.uri).path);
   });
 
+  languageClient.onNotification('MetafontDocumentManagerStarted', async () => {
+    // Open all mf files to make server aware of them. (probably not the best way to do this)
+    const uris = await vscode.workspace.findFiles('**/*.mf');
+    for (const uri of uris) {
+      await vscode.workspace.openTextDocument(uri.path);
+    }
+  });
+
   languageClient.start();
 
   return languageClient;
