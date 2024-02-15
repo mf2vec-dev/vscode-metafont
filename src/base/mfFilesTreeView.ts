@@ -60,21 +60,21 @@ class MfFilesTreeDataProvider implements vscode.TreeDataProvider<types.MfFileOrC
       return [
         ...response.inputs.map((input) => {
           return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: false };
-        }),
+        }).sort(compareInputs),
         ...response.inputtedBy.map((input) => {
           return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: true };
-        })
+        }).sort(compareInputs)
       ];
     }
     // if already a MfFileInput, keep the kind of MfFileInput.
     if (element.inputtedBy) {
       return response.inputtedBy.map((input) => {
         return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: true };
-      });
+      }).sort(compareInputs);
     }
     return response.inputs.map((input) => {
       return { uri: vscode.Uri.parse(input.uri), parentUri: element.uri, inputtedBy: false };
-    });
+    }).sort(compareInputs);
   }
 
   async getTreeItem(element: types.MfFileOrCategory): Promise<vscode.TreeItem> {
@@ -150,3 +150,13 @@ class MfFilesDragAndDropController implements vscode.TreeDragAndDropController<t
     }
   };
 };
+
+function compareInputs(a: types.MfFile | types.MfFileInput, b: types.MfFile | types.MfFileInput) {
+  if (a.uri < b.uri) {
+    return -1;
+  }
+  if (a.uri > b.uri) {
+    return 1;
+  }
+  return 0;
+}
