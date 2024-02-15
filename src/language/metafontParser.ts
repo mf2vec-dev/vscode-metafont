@@ -667,7 +667,7 @@ export class MetafontParser {
         break;
       }
       const uri = replacement.filePath;
-      const textDocument = this.documentManager.get(uri);
+      const textDocument = this.documentManager.documents.get(uri);
       if (textDocument === undefined) {
         break;
       }
@@ -695,7 +695,7 @@ export class MetafontParser {
     for (const declarationOrDeclarationToken of identifierInfo[key]) {
       const uri = declarationOrDeclarationToken.filePath;
       const documentData = this.documentManager.documentData.get(uri);
-      const textDocument = this.documentManager.get(uri);
+      const textDocument = this.documentManager.documents.get(uri);
       if (textDocument === undefined || documentData === undefined) {
         continue;
       }

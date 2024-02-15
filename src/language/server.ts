@@ -54,7 +54,7 @@ connection.onDidChangeConfiguration((didChangeConfigurationParams) => {
 });
 connection.onHover((hoverParams: HoverParams) => {
   const uri = hoverParams.textDocument.uri;
-  const document = documentManager.get(uri);
+  const document = documentManager.documents.get(uri);
   if (document !== undefined) {
     let hoverPosition = hoverParams.position;
     if (document.getText()[document.offsetAt(hoverPosition)] === '\n') {
@@ -126,7 +126,7 @@ connection.onHover((hoverParams: HoverParams) => {
 });
 connection.languages.semanticTokens.on((semanticTokensParams: SemanticTokensParams) => {
   const uri = semanticTokensParams.textDocument.uri;
-  const document = documentManager.get(uri);
+  const document = documentManager.documents.get(uri);
   const documentData = documentManager.documentData.get(uri);
   const semanticTokenBuilder = new SemanticTokensBuilder();
   if (document !== undefined && documentData !== undefined) {
@@ -159,7 +159,7 @@ connection.languages.semanticTokens.on((semanticTokensParams: SemanticTokensPara
 });
 connection.onDefinition((definitionParams: DefinitionParams) => {
   const uri = definitionParams.textDocument.uri;
-  const document = documentManager.get(uri);
+  const document = documentManager.documents.get(uri);
   const documentData = documentManager.documentData.get(uri);
   if (document !== undefined && documentData !== undefined) {
     const inputLinkLocations = getInputLinkLocations(document, documentData, definitionParams.position);
@@ -174,7 +174,7 @@ connection.onDefinition((definitionParams: DefinitionParams) => {
 });
 connection.onDeclaration((declarationParams: DeclarationParams) => {
   const uri = declarationParams.textDocument.uri;
-  const document = documentManager.get(uri);
+  const document = documentManager.documents.get(uri);
   const documentData = documentManager.documentData.get(uri);
   if (document !== undefined && documentData !== undefined) {
     const inputLinkLocations = getInputLinkLocations(document, documentData, declarationParams.position);

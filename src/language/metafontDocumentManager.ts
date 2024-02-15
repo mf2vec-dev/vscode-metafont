@@ -63,12 +63,21 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
   connection: Connection;
   sourceStr: string;
   documentData = new Map<string, DocumentData>();
+  /**
+   * For some reason TextDocuments doesn't store more than 61 documents.
+   * Instead of 62, 52 are returned by this.all() and this.keys(), and so on.
+   * This also affects this.get() as it can't return all documents.
+   */
+  // 
+  documents = new Map<string, TextDocument>();
   constructor(connection: Connection, sourceStr: string) {
     super(TextDocument);
     this.connection = connection;
     this.sourceStr = sourceStr;
     this.onDidChangeContent((textDocumentChangeEvent) => {
-      this.updateDocumentData(textDocumentChangeEvent.document);
+      const document = textDocumentChangeEvent.document;
+      this.documents.set(document.uri, document);
+      this.updateDocumentData(document);
     });
     this.listen(connection);
   }
