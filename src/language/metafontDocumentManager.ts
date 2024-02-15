@@ -85,11 +85,12 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     // As soon as there is a connection, send a notification which triggers initialization on client side,
     // e.g. making the server aware of files.
     // TODO there needs to be a better way than waiting.
-    setTimeout(() => {
-      this.connection.sendNotification('MetafontDocumentManagerStarted');
+    setTimeout(async () => {
+      await this.connection.sendRequest('OpenAllFilesRequest');
+      this.updateAllDocumentDataBasedOnInputs();
     }, 50); // even 1 seems to work, 0 not
   }
-  updateDocumentData(document: TextDocument) {
+  async updateDocumentData(document: TextDocument) {
     const tokens = this.tokenize(document.getText());
     this.documentData.set(document.uri, {
       tokens: tokens,
@@ -101,9 +102,35 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
       identifiersAtEnd: new Map<string, IdentifierInfo>()
     });
     const parser = new MetafontParser(this);
-    parser.parseDocument(document);
+    await parser.parseDocument(document);
     this.validateDocument(document);
+    this.connection.languages.semanticTokens.refresh(); // recommend client to request semantic tokens again
   }
+  async updateAllDocumentDataBasedOnInputs() {
+    const toBeUpdated = [...this.documents.keys()];
+    const numDocs = toBeUpdated.length;
+    const maxUpdates = 10*numDocs; // infinite loop limit // TODO better criterion?
+    for (let i = 1; i < maxUpdates && toBeUpdated.length > 0; i++) {
+      const uri = toBeUpdated.shift();
+      if (uri === undefined) {
+        continue;
+      }
+      const document = this.documents.get(uri);
+      if (document === undefined) {
+        continue;
+      }
+      await this.updateDocumentData(document);
+      const documentData = this.documentData.get(uri);
+      if (documentData === undefined) {
+        continue;
+      }
+      // Update this document again if it inputs files that still need to be updated.
+      if (documentData.inputs.some((input) => toBeUpdated.includes(input.inputUri))) {
+        toBeUpdated.push(uri);
+      }
+    }
+  }
+
   tokenize(text: string) {
     let match: RegExpExecArray | null;
     let pattern = joinRegexes([tokenPattern, '|(', nonAsciiCharPattern, ')|(%.*)'], 'g');
@@ -216,12 +243,12 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     };
   }
 
-  getDocumentData(document: TextDocument): DocumentData {
+  async getDocumentData(document: TextDocument): Promise<DocumentData> {
     let documentData = this.documentData.get(document.uri);
     if (documentData) {
       return documentData;
     }
-    this.updateDocumentData(document);
+    await this.updateDocumentData(document);
     documentData = this.documentData.get(document.uri)!;// since document data was updated this is not undefined
     return documentData; 
   }
