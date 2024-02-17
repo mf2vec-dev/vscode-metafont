@@ -423,6 +423,9 @@ export class MetafontParser {
         }
         if (['primary', 'secondary', 'tertiary', 'expr', 'suffix', 'text'].includes(nextTokenStr)) {
           this.handleNotReachable(parseMode, tokens, i);
+          if (lastParameterTypeTokenStr === undefined) { // delimited parameters
+            hoverStr += ' '; // space between declared variable and undelimited parameter type
+          }
           let parameterToken  = this.getTokenStr(textDocument, i);
           hoverStr += `${nextTokenStr} ${parameterToken}`;
           i++; // continue after parameter token (of = :=)
