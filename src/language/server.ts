@@ -46,7 +46,9 @@ connection.onInitialize((_initializeParams: InitializeParams) => {
   return result;
 });
 
-connection.onInitialized(() => {});
+connection.onInitialized(() => {
+  documentManager.initWithConnection();
+});
 
 connection.onDidChangeConfiguration((didChangeConfigurationParams) => {
   console.log('didChangeConfigurationParams');
@@ -226,8 +228,6 @@ connection.onRequest('MfInputsRequest', async (args: MfInputsRequestArgs): Promi
 });
 
 connection.listen();
-
-documentManager.initWithListeningConnection();
 
 
 /**

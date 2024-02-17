@@ -83,14 +83,11 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     });
     this.listen(connection);
   }
-  initWithListeningConnection() {
+  async initWithConnection() {
     // As soon as there is a connection, send a notification which triggers initialization on client side,
     // e.g. making the server aware of files.
-    // TODO there needs to be a better way than waiting.
-    setTimeout(async () => {
-      await this.connection.sendRequest('OpenAllFilesRequest');
-      this.updateAllDocumentDataBasedOnInputs();
-    }, 50); // even 1 seems to work, 0 not
+    await this.connection.sendRequest('OpenAllFilesRequest');
+    this.updateAllDocumentDataBasedOnInputs();
   }
   async updateDocumentData(document: TextDocument) {
     const tokens = this.tokenize(document.getText());
