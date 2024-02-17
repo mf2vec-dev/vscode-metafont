@@ -41,9 +41,11 @@ export type SemanticToken = {
 };
 export interface Input {
   range: Range,
-  inputUri: URI
+  inputUri: URI,
+  identifiersBeforeInput: Map<string, IdentifierInfo>
 }
 export interface DocumentData {
+  uri: URI,
   tokens: TokenData[]; // input file name as mf tokens
   semanticHovers: Map<number, string>;
   semanticTokens: Map<number, SemanticToken>;
@@ -93,6 +95,7 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
   async updateDocumentData(document: TextDocument) {
     const tokens = this.tokenize(document.getText());
     this.documentData.set(document.uri, {
+      uri: document.uri,
       tokens: tokens,
       semanticHovers: new Map<number, string>(),
       semanticTokens: new Map<number, SemanticToken>(),

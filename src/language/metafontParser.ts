@@ -103,7 +103,10 @@ export class MetafontParser {
     let parseMode = ParseMode.nothing; 
     let nestingStructure: NestingBlockInfo[] = [];
     let tokenLine = 0;
-    
+
+    // Before looking into any tokens of this document, add identifiers from documents inputting this document.
+    this.addIdentifiersFromInputtingDocuments(textDocument, identifiers);
+
     outerTokenLoop: for (let i = 0; i < tokens.length; i++) {
       let lastTokenLine = tokenLine;
       tokenLine = this.documentManager.getTokenRange(textDocument, tokens[i]).start.line;
@@ -516,7 +519,8 @@ export class MetafontParser {
             start: startPos,
             end: endPos
           },
-          inputUri: inputUri
+          inputUri: inputUri,
+          identifiersBeforeInput: _.cloneDeep(identifiers)
         };
         inputs.push(input);
 
@@ -544,6 +548,48 @@ export class MetafontParser {
 
     // Save identifiers in case this file is input.
     documentData.identifiersAtEnd = identifiers;
+  }
+
+  private addIdentifiersFromInputtingDocuments(textDocument: TextDocument, identifiers: Map<string, IdentifierInfo>) {
+    // Adds identifiers that are the same before all inputs.
+    // This is based on the assumption that inputted mf files are not used as job files.
+
+    const inputtingDocumentData = [...this.documentManager.documentData.values()].filter(
+      (documentData) => documentData.inputs.some((input) => input.inputUri === textDocument.uri)
+    );
+    const inputtingInputs = inputtingDocumentData.flatMap((document) => document.inputs.filter(
+      (input) => input.inputUri === textDocument.uri)
+    );
+    const identifiersBeforeInputs = inputtingInputs.map((input) => _.cloneDeep(input.identifiersBeforeInput));
+    const identifierNamesBeforeInputs = identifiersBeforeInputs.map((identifiersBeforeInput) => [...identifiersBeforeInput.keys()]);
+    if (identifierNamesBeforeInputs.length === 0) {
+      return;
+    }
+
+    const identifierNamesBeforeAllInputs = identifierNamesBeforeInputs.reduce(
+      (identifierNamesAcc, identifierNamesCur) => identifierNamesAcc.filter((identifierName) => identifierNamesCur.includes(identifierName))
+    );
+    identifierNameLoop: for (const identifierName of identifierNamesBeforeAllInputs) {
+      const identifierInfo = identifiersBeforeInputs[0].get(identifierName)!; // filtered above so this is not undefined
+      for (const identifiersBeforeInput of identifiersBeforeInputs.slice(1)) {
+        const identifierInfo_ = identifiersBeforeInput.get(identifierName)!; // filtered above so this is not undefined
+        if (identifierInfo.hover !== identifierInfo_.hover) {
+          // TODO maybe some combination instead ?
+          continue identifierNameLoop;
+        }
+        if (JSON.stringify(identifierInfo.replacement) !== JSON.stringify(identifierInfo_.replacement)) {
+          continue identifierNameLoop;
+        }
+        if (identifierInfo.tokenType !== identifierInfo_.tokenType) {
+          continue identifierNameLoop;
+        }
+        identifierInfo.declarationTokens.push(...identifierInfo_.declarationTokens);
+        identifierInfo.definitionTokens.push(...identifierInfo_.definitionTokens);
+      }
+
+      // If not continued outer loop, this identifier has similar meanings.
+      identifiers.set(identifierName, identifierInfo);
+    }
   }
 
   private handleNotReachable(parseMode: ParseMode, tokens: TokenData[], i: number) {
