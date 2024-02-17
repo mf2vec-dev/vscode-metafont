@@ -1,5 +1,6 @@
+import * as path from 'node:path';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Connection, Declaration, Definition, Diagnostic, DiagnosticSeverity, DiagnosticTag, Position, Range, TextDocuments, URI } from 'vscode-languageserver/node';
+import { Connection, Declaration, Definition, Diagnostic, DiagnosticSeverity, DiagnosticTag, Position, Range, TextDocuments, URI, WorkDoneProgressServerReporter } from 'vscode-languageserver/node';
 import { IdentifierInfo, MetafontParser } from './metafontParser';
 import { joinRegexes, nonAsciiCharPattern, numericTokenPattern, symbolicTokenPattern } from './regexes';
 
@@ -72,6 +73,7 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
    */
   // 
   documents = new Map<string, TextDocument>();
+  initProgressReporter?: WorkDoneProgressServerReporter ;
   constructor(connection: Connection, sourceStr: string) {
     super(TextDocument);
     this.connection = connection;
@@ -84,10 +86,15 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     this.listen(connection);
   }
   async initWithConnection() {
+    this.connection.window.createWorkDoneProgress().then((reporter) => {
+      reporter.begin('Parsing .mf files', 0, 'waiting for files...');
+      this.initProgressReporter = reporter;
+    });
+
     // As soon as there is a connection, send a notification which triggers initialization on client side,
     // e.g. making the server aware of files.
     await this.connection.sendRequest('OpenAllFilesRequest');
-    this.updateAllDocumentDataBasedOnInputs();
+    this.updateAllDocumentDataBasedOnInputs(true);
   }
   async updateDocumentData(document: TextDocument) {
     const tokens = this.tokenize(document.getText());
@@ -106,18 +113,35 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
     this.validateDocument(document);
     this.connection.languages.semanticTokens.refresh(); // recommend client to request semantic tokens again
   }
-  async updateAllDocumentDataBasedOnInputs() {
+  async updateAllDocumentDataBasedOnInputs(useInitProgressReporter = false) {
+    if (useInitProgressReporter && this.initProgressReporter !== undefined
+      && this.initProgressReporter.token.isCancellationRequested
+    ) {
+      return; // Cancelled before it really started.
+    }
     const toBeUpdated = [...this.documents.keys()];
     const numDocs = toBeUpdated.length;
     const maxUpdates = 10*numDocs; // infinite loop limit // TODO better criterion?
-    for (let i = 1; i < maxUpdates && toBeUpdated.length > 0; i++) {
+    for (let i = 0; i < maxUpdates && toBeUpdated.length > 0; i++) {
       const uri = toBeUpdated.shift();
       if (uri === undefined) {
         continue;
       }
+      if (useInitProgressReporter && this.initProgressReporter !== undefined) {
+        if (this.initProgressReporter.token.isCancellationRequested) {
+          // Check here to prevent message after cancellation.
+          break;
+        }
+        this.initProgressReporter.report((i/(i+toBeUpdated.length))*100, `${path.basename(uri)} (${toBeUpdated.length} files left...)`);
+      }
       const document = this.documents.get(uri);
       if (document === undefined) {
         continue;
+      }
+      if (useInitProgressReporter && this.initProgressReporter !== undefined
+        && this.initProgressReporter.token.isCancellationRequested
+      ) {
+        break; // cancelled
       }
       await this.updateDocumentData(document);
       const documentData = this.documentData.get(uri);
@@ -128,6 +152,9 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
       if (documentData.inputs.some((input) => toBeUpdated.includes(input.inputUri))) {
         toBeUpdated.push(uri);
       }
+    }
+    if (useInitProgressReporter && this.initProgressReporter !== undefined) {
+      this.initProgressReporter.done();
     }
   }
 
