@@ -1,11 +1,10 @@
 import * as vscode from 'vscode';
-
-import { debugAdapterFactory } from '../extension';
-import { parsePathString, parsePictureString } from './previewMfRunner';
 import * as types from '../base/types';
+import { debugAdapterFactory } from '../extension';
 import {
   GeometryPreviewWebviewManager, mfPath2PreviewPathData, mfPicture2PreviewPicture
 } from './geometryPreviewWebviewManager';
+import { parsePathString, parsePictureString } from './previewMfRunner';
 import { ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FileIndependentWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';

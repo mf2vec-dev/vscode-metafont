@@ -77,9 +77,9 @@ export type PreviewBezier = {
   type: 'Bezier';
   data: {
     moveto: [number, number];
-    curvetos: { cp1: [number, number]; cp2: [number, number]; end: [number, number]; }[];
+    curvetos: { cp1: [number, number]; cp2: [number, number]; end: [number, number] }[];
     cycle: boolean;
-  }
+  };
   xoffset: number;
   yoffset: number;
   xGlyphPos: number;
@@ -89,7 +89,7 @@ export type PreviewPicture = {
   line: number; // one-based
   filePath: string; // absolute path
   type: 'Picture';
-  data: {}
+  data: {};
   xoffset: number;
   yoffset: number;
   xGlyphPos: number;
@@ -103,7 +103,7 @@ export type PreviewLabel = {
     mid: [number, number];
     text: string;
     pos: string;
-  }
+  };
   xoffset: number;
   yoffset: number;
   xGlyphPos: number;
@@ -123,7 +123,7 @@ export type PreviewShipout = {
     xoffset: number;
     yoffset: number;
     picture?: PreviewPicture;
-  }
+  };
 };
 
 export type PreviewGeomItem = PreviewBezier | PreviewPicture | PreviewLabel;
@@ -136,8 +136,8 @@ export function isPreviewShipout(cmd: PreviewItem): cmd is PreviewShipout {
 }
 
 export type Trace = {
-  type: string,
-  trace: string
+  type: string;
+  trace: string;
 };
 
 export type TokenProcessingResult = {
@@ -156,7 +156,7 @@ export type MetafontInputStatement = {
 // project files
 
 export type MfFileOrCategory = MfFileCategory | MfFile | MfFileInput;
-export type MfFileCategory = { label: string; id: MfFileCategoryId; };
+export type MfFileCategory = { label: string; id: MfFileCategoryId };
 export enum MfFileCategoryId { // enum for clarity in .mf-project file
   unknown = 'unknown',
   param = 'param',
@@ -164,12 +164,12 @@ export enum MfFileCategoryId { // enum for clarity in .mf-project file
   program = 'program',
   base = 'base'
 };
-export type MfFile = { uri: vscode.Uri; categoryIds: MfFileCategoryId[]; };
+export type MfFile = { uri: vscode.Uri; categoryIds: MfFileCategoryId[] };
 export type MfFileInput = {
   uri: vscode.Uri;
   parentUri: vscode.Uri;
   /** true: this file is inputted somewhere else */
-  inputtedBy: boolean
+  inputtedBy: boolean;
 };
 export function isMfFileCategory(fileOrCategory: MfFileOrCategory): fileOrCategory is MfFileCategory {
   return 'id' in fileOrCategory;
@@ -186,5 +186,5 @@ export function isMfFileInput(fileOrCategory: MfFileOrCategory): fileOrCategory 
 export type ExpressionResult = {
   kind: 'error' | 'raw' | 'value';
   type?: string;
-  content: string
+  content: string;
 };

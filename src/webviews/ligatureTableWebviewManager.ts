@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
-
+import { MfFileManager } from '../base/mfFileManager';
 import * as types from '../base/types';
+import { toCharLabel } from '../base/utils';
 import { TableWebviewManager } from './tableWebviewManager';
 import { ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';
-
-import { MfFileManager } from '../base/mfFileManager';
-import { toCharLabel } from '../base/utils';
 
 export abstract class LigatureTableWebviewManager extends FontWebviewManagerMixin(TableWebviewManager) implements InteractionSpecificWebviewManager {
   tableLines: [number, number, string, number][] | undefined;

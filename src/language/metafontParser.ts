@@ -46,25 +46,18 @@ type NestingBlockInfo = {
   bodyTexts?: BodyTextInfo[];
 };
 
-enum DeclarationType {
-  'declaration',
-  'let',
-  'def'
-}
-
 type TokenRef = {
   filePath: string;
   idx: number;
 };
 
 export type IdentifierInfo = {
-  declarationTokens: TokenRef[],
-  definitionTokens: TokenRef[],
-  hover: string,
-  tokenType?: TokenType,
-  declarationType?: DeclarationType,
-  completionItemKind?: CompletionItemKind,
-  replacement?: TokenRef
+  declarationTokens: TokenRef[];
+  definitionTokens: TokenRef[];
+  hover: string;
+  tokenType?: TokenType;
+  completionItemKind?: CompletionItemKind;
+  replacement?: TokenRef;
 };
 
 const keywordPattern = joinRegexes([
@@ -659,10 +652,6 @@ export class MetafontParser {
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
           tokenType = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.tokenType;
         };
-        let declarationType: DeclarationType | undefined;
-        if ((nestedBlockInfo.bodyTexts!).length === 1) {
-          declarationType = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.declarationType;
-        };
         let completionItemKind: CompletionItemKind | undefined;
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
           completionItemKind = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.completionItemKind;
@@ -676,7 +665,6 @@ export class MetafontParser {
           definitionTokens: definitionTokens,
           hover: hover,
           tokenType: tokenType,
-          declarationType: declarationType,
           completionItemKind: completionItemKind,
           replacement: replacement
         };
@@ -719,7 +707,6 @@ export class MetafontParser {
     let i = 0;
     const imax = 100; // limit
     while (identifiers.has(replacedTokenStr) && i < imax) {
-      identifiers.get(replacedTokenStr)!.declarationType === DeclarationType.let;
       const replacement = identifiers.get(replacedTokenStr)!.replacement;
       if (replacement === undefined) {
         break;

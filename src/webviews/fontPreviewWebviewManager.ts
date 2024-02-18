@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
-
 import * as types from '../base/types';
+import { PreviewGeomItem } from '../base/types';
 import {
   GeometryPreviewWebviewManager, getBoxLines, mfPath2PreviewPathData, mfPicture2PreviewPicture
 } from './geometryPreviewWebviewManager';
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';
-import { PreviewGeomItem } from '../base/types';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as _ from 'lodash';
 import { MfFileManager } from '../base/mfFileManager';
@@ -163,10 +162,10 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
     this.rawPreviewItems = new Map<number, types.PreviewItem[]>();
     let rawCharPreviewItems: types.PreviewItem[] = [];
     type PreviousShipoutCmd = {
-      line: number,
-      filePath: string,
-      charcode: number,
-      charext: number
+      line: number;
+      filePath: string;
+      charcode: number;
+      charext: number;
     };
     let previousShipoutCmd: PreviousShipoutCmd | undefined = undefined;
     this.ligtableKerningLines = [];

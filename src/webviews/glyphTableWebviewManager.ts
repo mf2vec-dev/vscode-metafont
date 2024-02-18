@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-
 import { MfFileManager } from '../base/mfFileManager';
 import * as types from '../base/types';
 import { toCharLabel, toMfNumberStr } from '../base/utils';

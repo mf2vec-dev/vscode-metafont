@@ -37,21 +37,21 @@ export enum TokenType {
 
 export type TokenData = [start: number, length: number, tokenKind: TokenKind, tokenFlag: TokenFlag];
 export type SemanticToken = {
-  tokenType?: TokenType,
-  tokenModifiers?: []
+  tokenType?: TokenType;
+  tokenModifiers?: [];
 };
 export interface Input {
-  range: Range,
-  inputUri: URI,
-  identifiersBeforeInput: Map<string, IdentifierInfo>
+  range: Range;
+  inputUri: URI;
+  identifiersBeforeInput: Map<string, IdentifierInfo>;
 }
 export interface DocumentData {
-  uri: URI,
+  uri: URI;
   tokens: TokenData[]; // input file name as mf tokens
   semanticHovers: Map<number, string>;
   semanticTokens: Map<number, SemanticToken>;
   declarations: Map<number, Declaration>;
-  definitions: Map<number, Definition>
+  definitions: Map<number, Definition>;
   inputs: Input[];
   identifiersAtEnd: Map<string, IdentifierInfo>;
 };
@@ -268,15 +268,5 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
       start: textDocument.positionAt(tokenData[0]),
       end: textDocument.positionAt(tokenData[0] + tokenData[1])
     };
-  }
-
-  async getDocumentData(document: TextDocument): Promise<DocumentData> {
-    let documentData = this.documentData.get(document.uri);
-    if (documentData) {
-      return documentData;
-    }
-    await this.updateDocumentData(document);
-    documentData = this.documentData.get(document.uri)!;// since document data was updated this is not undefined
-    return documentData; 
   }
 }

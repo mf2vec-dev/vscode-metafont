@@ -1,3 +1,4 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import {
   DocumentSelector,
@@ -8,7 +9,6 @@ import {
 } from 'vscode-languageclient/node';
 import { symbolicOrNumericTokenPattern } from './regexes';
 import { OpenTextDocumentRequestArgs, OpenTextDocumentResponse } from './server';
-import path = require('path');
 
 
 let languageClient: LanguageClient;

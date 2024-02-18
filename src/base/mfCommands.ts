@@ -1,11 +1,9 @@
 import * as childProcess from 'child_process';
+import * as path from 'path';
 import * as vscode from 'vscode';
-
 import { activeMfFileAbsPath } from '../extension';
 import { MfFileManager } from './mfFileManager';
 import { applyParams } from './utils';
-
-import path = require('path');
 
 
 let terminal: vscode.Terminal | undefined = undefined;

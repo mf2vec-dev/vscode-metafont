@@ -1,11 +1,10 @@
-import * as vscode from 'vscode';
-import * as types from '../base/types';
-
-import { activeMfFileAbsPath, activeMfFileLineNumber } from '../extension';
-import { MfFileManager } from '../base/mfFileManager';
-import { ContentSpecificWebviewManagerConstructor, InteractionMixin } from './webviewManager';
 import * as path from 'path';
+import * as vscode from 'vscode';
+import { MfFileManager } from '../base/mfFileManager';
+import * as types from '../base/types';
+import { activeMfFileAbsPath, activeMfFileLineNumber } from '../extension';
 import { runMfForPreview } from './previewMfRunner';
+import { ContentSpecificWebviewManagerConstructor, InteractionMixin } from './webviewManager';
 
 /*
 There are three kinds of file interaction of webviews:\
@@ -144,7 +143,7 @@ export function FontWebviewManagerMixin<TBase extends ContentSpecificWebviewMana
       });
   
       // job
-      const dropDownOptions: { label: string; selected?: boolean; disabled?: boolean; }[] = [
+      const dropDownOptions: { label: string; selected?: boolean; disabled?: boolean }[] = [
         { label: Mixin.activeEditor, selected: this.jobFilePathSelection === Mixin.activeEditor },
         { label: '--------', disabled: true },
         { label: Mixin.defaultJob, selected: this.jobFilePathSelection === Mixin.defaultJob },
@@ -225,7 +224,7 @@ export function SelectionWebviewManagerMixin<TBase extends ContentSpecificWebvie
   abstract class Mixin extends FontWebviewManagerMixin(Base) implements InteractionMixin {
     previewFilePathSelection: string = Mixin.activeEditor;
     previewFileLineNumber?: number;
-    locked: false | {absPath: string, lineNumber: number} = false;
+    locked: false | {absPath: string; lineNumber: number} = false;
     refreshCheckOnSelectionChange() {
       return !this.locked;
     };
@@ -270,7 +269,7 @@ export function SelectionWebviewManagerMixin<TBase extends ContentSpecificWebvie
       });
   
       // job
-      const dropDownOptions: { label: string; selected?: boolean; disabled?: boolean; }[] = [
+      const dropDownOptions: { label: string; selected?: boolean; disabled?: boolean }[] = [
         { label: Mixin.activeEditor, selected: this.jobFilePathSelection === Mixin.activeEditor },
         { label: '--------', disabled: true },
         { label: Mixin.defaultJob, selected: this.jobFilePathSelection === Mixin.defaultJob },

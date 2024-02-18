@@ -17,7 +17,7 @@ export class MetafontDebugWrapper extends EventEmitter {
   clientLineOffset = 1; // client default is linesStartAt1 === true, but this debuggerLinesStartAt1 === false
   clientColumnOffset = 1; // see above
   processTokensPromise = Promise.resolve();
-  tokenProcessingQueue: {tokens: string, internal: boolean, resolve: (value: types.TokenProcessingResult | undefined) => void, reject: (reason?: any) => void}[] = [];
+  tokenProcessingQueue: {tokens: string; internal: boolean; resolve: (value: types.TokenProcessingResult | undefined) => void; reject: (reason?: any) => void}[] = [];
   isProcessingTokens = false;
   stack: { filePath: string; lineNumber: number }[] = [];
   pausedOnException = false;

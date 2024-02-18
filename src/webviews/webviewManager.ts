@@ -1,28 +1,28 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
 import * as fs from 'fs';
+import * as path from 'path';
+import * as vscode from 'vscode';
 import { MfFileManager } from '../base/mfFileManager';
 
-/**
+/*
 general class structure for webview manager:
-+           webview manager (WebviewManager) OK
-  +         content type specific subclass (geometry or table) (ContentTypeSpecificWebviewManager) OK
-    +       file interaction mixin (InteractionMixin) OK
++           webview manager (WebviewManager)
+  +         content type specific subclass (geometry or table) (ContentTypeSpecificWebviewManager)
+    +       file interaction mixin (InteractionMixin)
     | +     subclass using file interaction mixin (InteractionSpecificWebviewManager)
-    |   +   container mixin (ContainerMixin) OK
+    |   +   container mixin (ContainerMixin)
     |   | + subclass using container mixin
 
 +   |   |   makeWebviewFromHtml           - set options, html path, paths of other resources
-  + |   |   makeWebview !                 - calls makeWebviewFromHtml with html file name
-    +   |   makeWebviewWithInteraction  ! - ! needs to add file interaction specific listeners
-    | + |   setUpWebview !                - 
-    |   +   setUpWebviewWithContainer !   - ! needs to add container specific listeners
+  + |   |   makeWebview                   - calls makeWebviewFromHtml with html file name
+    +   |   makeWebviewWithInteraction    - ! needs to add file interaction specific listeners
+    | + |   setUpWebview                  - 
+    |   +   setUpWebviewWithContainer     - ! needs to add container specific listeners
     |   | + (none)                        - (none)
 
 +   |   |   postRefresh                   - posts data as `'refresh'`
-  + |   |   sendRefresh !                 - calls postRefresh with data as expected from html
-    +   |   sendRefreshWithInteraction !  - ! needs to add file interaction specific title bar items
-      + |   refreshWebview !              - 
+  + |   |   sendRefresh                   - calls postRefresh with data as expected from html
+    +   |   sendRefreshWithInteraction    - ! needs to add file interaction specific title bar items
+      + |   refreshWebview                - 
         +   (none)                        - (no container specific refresh needed)
           + (none)                        - (none)
 
@@ -39,46 +39,6 @@ Class structure for Webviews:
           - KerningTableWebviewViewManager using ViewWebviewMangerMixin
       - LigatureTableWebviewManager using FontWebviewManagerMixin
           - LigatureTableWebviewViewManager using ViewWebviewMangerMixin
-
-
-Details:
-- WebviewManager
-  implementing makeWebviewFromHtml and postRefresh methods
-  requiring abstract methods getWebviewContainer, sendRefresh, refreshWebview, makeWebview, setUpWebview
-- WebviewManager is subclassed by content-specific webview managers
-  - GeometryPreviewWebviewManager
-  - TableWebviewManager
-  Each of them
-  - implements
-  - can be used with file interaction mixins FontWebviewManagerMixin or SelectionWebviewManagerMixin
-    Each of those Mixins
-- The subclasses and the subclasses with mixins
-  - implement ...
-  - should be used with container mixins PanelWebviewManagerMixin or ViewWebviewMangerMixin
-- The container mixins implement
-  - WebviewManager's abstract method getWebviewContainer
-  - setUpWebview method which
-    - calls makeWebview of the subclasses or the mixins
-    - register a callback which calls refreshWebview method when needed
-
-So the hierarchy of creating a webview is (definition):
-- setUpWebview - container mixins
-  - add listener to refresh based on container type (e.g. visibility)
-    - listeners call ...
-- setUpWebview - subclasses with content-specific mixins
-  - 
-- makeWebview - content-specific mixins
-  - add listener to refresh based on file interactivity (e.g. active file)
-    - listeners call ...
-- makeWebview - subclasses
-  - call makeWebviewFromHtml with html file name
-- makeWebviewFromHtml - WebviewManager
-  - set options, html path, paths of other resources
-
-And the hierarchy of updating a webview is:
-- refreshWebview - 
-- sendRefresh
-- postRefresh - WebviewManager
 */
 
 export type ContentSpecificWebviewManagerConstructor = abstract new (...args: any[]) => ContentTypeSpecificWebviewManager;
@@ -86,10 +46,10 @@ export type WebviewManagerConstructor = abstract new (...args: any[]) => Webview
 type WebviewContainer = vscode.WebviewPanel | vscode.WebviewView;
 
 type WebviewMixinArgs = {
-  webviewViewId?: string,
-  webviewPanelTypeId?: string,
-  webviewPanelTitle?: string
-  mfFileManager?: MfFileManager
+  webviewViewId?: string;
+  webviewPanelTypeId?: string;
+  webviewPanelTitle?: string;
+  mfFileManager?: MfFileManager;
 };
 
 export interface ContainerMixin {
@@ -113,7 +73,7 @@ export interface ContentTypeSpecificWebviewManager extends WebviewManager{
 
 type WebviewMessage = {
   command: string;
-  data?: any
+  data?: any;
 };
 enum WebviewStatus {
   ok = 'ok',

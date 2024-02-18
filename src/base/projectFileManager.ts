@@ -1,8 +1,8 @@
 import { readFileSync, writeFile } from 'fs';
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { MfFileManager } from './mfFileManager';
 import * as types from './types';
-import path = require('path');
 
 export function activateProjectFileManager(ctx: vscode.ExtensionContext) {
   const projectFileManager = new ProjectFileManager();

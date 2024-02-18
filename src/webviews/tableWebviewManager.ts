@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-
 import { ContentTypeSpecificWebviewManager, WebviewManager } from './webviewManager';
 
 export abstract class TableWebviewManager extends WebviewManager implements ContentTypeSpecificWebviewManager {

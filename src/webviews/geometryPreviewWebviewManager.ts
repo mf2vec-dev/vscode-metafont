@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-
 import * as types from '../base/types';
 import { ContentTypeSpecificWebviewManager, WebviewManager } from './webviewManager';
 
@@ -126,7 +125,7 @@ type BoxLine = {
   xGlyphPos: number;
   yGlyphPos: number;
 };
-function combinePixelRows(picData: {[key: string]: {pos: BoxLine[], neg: BoxLine[]}}, key: 'pos' | 'neg') {
+function combinePixelRows(picData: {[key: string]: {pos: BoxLine[]; neg: BoxLine[]}}, key: 'pos' | 'neg') {
   const rowNums = Object.keys(picData).map((k) => parseInt(k, 10)).sort((a, b) => a - b);
   for (const rowNum of rowNums) { // loop over rows
     const rowData = picData[rowNum][key];

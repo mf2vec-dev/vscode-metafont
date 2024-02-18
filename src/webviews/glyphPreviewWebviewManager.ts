@@ -1,16 +1,15 @@
 import * as vscode from 'vscode';
-
-import { activeMfFileAbsPath, activeMfFileLineNumber } from '../extension';
+import { MfFileManager } from '../base/mfFileManager';
 import * as types from '../base/types';
+import { PreviewGeomItem } from '../base/types';
 import { toMfNumberStr as toMfNumStr } from '../base/utils';
+import { activeMfFileAbsPath, activeMfFileLineNumber } from '../extension';
 import {
   GeometryPreviewWebviewManager, getBoxLines, mfPath2PreviewPathData, mfPicture2PreviewPicture
 } from './geometryPreviewWebviewManager';
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { SelectionWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';
-import { PreviewGeomItem } from '../base/types';
-import { MfFileManager } from '../base/mfFileManager';
 
 export abstract class GlyphPreviewWebviewManager extends SelectionWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager{
   rawPreviewItems: types.PreviewItem[] |undefined = undefined;

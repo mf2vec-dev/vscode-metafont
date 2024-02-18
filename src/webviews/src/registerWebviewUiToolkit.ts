@@ -8,11 +8,11 @@ import {
   vsCodeDataGridRow,
   vsCodeDivider,
   vsCodeDropdown,
-  vsCodePanels,
   vsCodePanelTab,
   vsCodePanelView,
-  vsCodeTextField,
-  vsCodeTag
+  vsCodePanels,
+  vsCodeTag,
+  vsCodeTextField
 } from '@vscode/webview-ui-toolkit';
 
 provideVSCodeDesignSystem().register(
@@ -24,9 +24,9 @@ provideVSCodeDesignSystem().register(
   vsCodeDataGridRow(),
   vsCodeDivider(),
   vsCodeDropdown(),
-  vsCodePanels(),
   vsCodePanelTab(),
   vsCodePanelView(),
-  vsCodeTextField(),
-  vsCodeTag()
+  vsCodePanels(),
+  vsCodeTag(),
+  vsCodeTextField()
 );

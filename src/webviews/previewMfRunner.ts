@@ -1,9 +1,8 @@
 import * as childProcess from 'child_process';
-import { rm, readdirSync, mkdtempSync, readFileSync } from 'fs';
+import { mkdtempSync, readFileSync, readdirSync, rm } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-
 import * as types from '../base/types';
 
 export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = true, createPictures = true, logLigtables = false) {

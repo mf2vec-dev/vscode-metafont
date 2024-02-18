@@ -12,6 +12,6 @@ export function toCharLabel(charCode: number) {
   return charLabel;
 }
 
-export function applyParams(template: string, params: { [key: string]: string; }) {
+export function applyParams(template: string, params: { [key: string]: string }) {
   return template.replace(/\${(.*?)}/g, (substr, p) => params[p]);
 }

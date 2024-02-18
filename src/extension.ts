@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
-
 import { LanguageClient } from 'vscode-languageclient/node';
 import { activateMfCommands } from './base/mfCommands';
 import { activateMfFileManager, MfFileManager } from './base/mfFileManager';
 import { activateMfFilesView } from './base/mfFilesTreeView';
-import { activateProjectFileManager, ProjectFileManager } from './base/projectFileManager';
+import { activateProjectFileManager } from './base/projectFileManager';
 import { MetafontDebugSession } from './debug/metafontDebugSession';
 import { activateLanguageFeatures } from './language/languageFeatures';
 import {

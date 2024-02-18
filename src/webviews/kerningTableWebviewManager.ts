@@ -1,13 +1,11 @@
 import * as vscode from 'vscode';
-
+import { MfFileManager } from '../base/mfFileManager';
 import * as types from '../base/types';
+import { toCharLabel, toMfNumberStr } from '../base/utils';
 import { TableWebviewManager } from './tableWebviewManager';
 import { ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';
-
-import { toCharLabel, toMfNumberStr } from '../base/utils';
-import { MfFileManager } from '../base/mfFileManager';
 
 export abstract class KerningTableWebviewManager extends FontWebviewManagerMixin(TableWebviewManager) implements InteractionSpecificWebviewManager {
   tableLines: types.MfLigtable['kerns'] | undefined;

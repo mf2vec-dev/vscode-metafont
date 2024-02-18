@@ -3,7 +3,6 @@ import {
   CompletionItem,
   CompletionItemKind,
   CompletionParams,
-  createConnection,
   DeclarationParams,
   DefinitionParams,
   Hover,
@@ -16,7 +15,8 @@ import {
   Range,
   SemanticTokens,
   SemanticTokensBuilder,
-  SemanticTokensParams
+  SemanticTokensParams,
+  createConnection
 } from 'vscode-languageserver/node';
 import { DocumentData, MetafontDocumentManager, TokenFlag, TokenType } from './metafontDocumentManager';
 import { numericTokenPattern } from './regexes';
@@ -248,7 +248,10 @@ connection.onCompletion((completionParams: CompletionParams) => {
 
 export type MfInputsRequestArgs = { uri: string };
 export type MfInputsRequestInput = { uri: string };
-export type MfInputsResponse = { inputs: MfInputsRequestInput[], inputtedBy: MfInputsRequestInput[] };
+export type MfInputsResponse = {
+  inputs: MfInputsRequestInput[];
+  inputtedBy: MfInputsRequestInput[];
+};
 
 export type OpenTextDocumentRequestArgs = { uri: string };
 export type OpenTextDocumentResponse = void;

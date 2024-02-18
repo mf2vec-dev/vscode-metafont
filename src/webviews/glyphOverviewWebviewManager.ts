@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
-
+import { MfFileManager } from '../base/mfFileManager';
 import * as types from '../base/types';
+import { PreviewGeomItem } from '../base/types';
 import { toCharLabel } from '../base/utils';
 import {
   GeometryPreviewWebviewManager, getBoxLines, mfPath2PreviewPathData, mfPicture2PreviewPicture
@@ -8,8 +9,6 @@ import {
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';
-import { PreviewGeomItem } from '../base/types';
-import { MfFileManager } from '../base/mfFileManager';
 
 export abstract class GlyphOverviewWebviewManager extends FontWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager{
   rawPreviewItems: Map<number, types.PreviewItem[]> | undefined = undefined;
@@ -68,10 +67,10 @@ export abstract class GlyphOverviewWebviewManager extends FontWebviewManagerMixi
     this.rawPreviewItems = new Map<number, types.PreviewItem[]>();
     let rawCharPreviewItems: types.PreviewItem[] = [];
     type PreviousShipoutCmd = {
-      line: number,
-      filePath: string,
-      charcode: number,
-      charext: number
+      line: number;
+      filePath: string;
+      charcode: number;
+      charext: number;
     };
     let previousShipoutCmd: PreviousShipoutCmd | undefined = undefined;
     this.runMfProcessingCmdsWith(

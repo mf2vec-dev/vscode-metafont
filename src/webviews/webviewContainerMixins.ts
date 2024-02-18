@@ -1,7 +1,6 @@
-import * as vscode from 'vscode';
-
-import { ContainerMixin, WebviewManagerConstructor } from './webviewManager';
 import * as path from 'path';
+import * as vscode from 'vscode';
+import { ContainerMixin, WebviewManagerConstructor } from './webviewManager';
 
 /*
 a webview can live in:
