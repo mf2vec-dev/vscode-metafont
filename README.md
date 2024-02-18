@@ -1,6 +1,6 @@
 # `vscode-metafont`
 
-A Visual Studio Code extension with language and preview support for METAFONT.
+A Visual Studio Code extension that provides language, preview and debugging support for METAFONT.
 
 - [`vscode-metafont`](#vscode-metafont)
   - [Installation](#installation)
@@ -45,7 +45,7 @@ You can also package the extension yourself:
     Table of all glyph box dimensions
   - Kerning pairs (table)\
     Table of all kerning pairs
-  - Ligatures (table)
+  - Ligatures (table)\
     Table of all ligatures
 
   For all those previews, you can specify a *first line* and a *job file* to preview the output with different parameter files, modes/resolutions, etc. You can also move many previews to separate windows.
@@ -74,7 +74,7 @@ the output of METAFONT into graphic form.
 
 In appendix H of The METAFONTbook, Donald E. Knuth discusses two programs, `GFtoDVI` and $\TeX$, to generate proof sheets. While these are great for generating *large scale proofs* and *font samples*, you may want to get a more detailed view of a character's anatomy while designing it. This was the original motivation for this extension.
 
-The development of this extension started in 2019, with the preview based on the `mf2vec` concept (see [the explanations in `mf2ff`'s README](https://github.com/mf2vec-dev/mf2ff?tab=readme-ov-file#mf2vec-concept)). Starting in October 2023, some parts of the extension were re-implemented and many features were added. While it is relatively easy to use METAFONT as an interpreter to provide previews as a special feature of a language extension, it is much more difficult to correctly implement standard language features such as syntax highlighting, semantic highlighting, goto definition, etc. due to the flexibility of the METAFONT language, e.g. `a.b` can be a variable or the use of a macro that takes an undelimited parameter. The macro could be defined in another file that the current file doesn't reference. In other languages you have to `import` everything you want to use. In METAFONT it is much harder to know where and how a symbolic token was defined. Therefore these basic language features may not be as robust as you are used to in other languages.
+The development of this extension started in 2019, with the preview based on the `mf2vec` concept (see [the explanations in `mf2ff`'s README](https://github.com/mf2vec-dev/mf2ff?tab=readme-ov-file#mf2vec-concept)). Starting in October 2023, some parts of the extension were re-implemented and many features were added. While it is relatively easy to use METAFONT as an interpreter to provide previews as a special feature of a language extension, it is much more difficult to correctly implement standard language features such as syntax highlighting, semantic highlighting, go to definition, etc. due to the flexibility of the METAFONT language, e.g. `a.b` can be a variable or the use of a macro that takes an undelimited parameter. The macro could be defined in another file that the current file doesn't reference. In other languages you have to `import` everything you want to use. In METAFONT it is much harder to know where and how a symbolic token was defined. Therefore these basic language features may not be as robust as you are used to in other languages.
 
 The developer of this extension hopes that it will help font designers to design and debug fonts and glyphs more easily. Although this may not be an ideal solution, it could be a small step towards Dave Crossland's vision to help METAFONT to catch on:
 > Perhaps if there was a graphical user interface
@@ -90,7 +90,9 @@ be more confident about doing so.
 - Code quality\
   This is my first big TypeScript/JavaScript/Node.js project so I'm new to this ecosystem. I hope to learn more and improve the code quality and test coverage along the way. Anyone with more experience is welcome to fix obvious flaws or discuss potential improvements.
 - Fixes and improvements\
-  There is still a lot of room for improvement in some language features. There are some major and many minor bugs in the debugger. The GUI of the previews could also be improved.
+  There is still a lot of room for improvement in some of the language features, both in terms of functionality and performance.
+  There are some major and many minor bugs in the debugger.
+  The GUI of the previews could also be improved.
 - Better efficiency and speed\
   Running METAFONT less frequently for previews and updating them based on unsaved files, may allow for near real-time previews.
 - Notebook-like METAFONT interface [maybe]\
