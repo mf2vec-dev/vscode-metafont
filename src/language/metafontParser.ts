@@ -1,17 +1,13 @@
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as _ from 'lodash';
-import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Declaration, Definition } from 'vscode-languageserver/node';
-import * as sparks from './sparks.json';
-
 import { existsSync } from 'node:fs';
+import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import {
-  Input,
-  MetafontDocumentManager, SemanticToken, TokenData, TokenFlag, TokenType
-} from './metafontDocumentManager';
+import { TextDocument } from 'vscode-languageserver-textdocument';
+import { CompletionItemKind, Declaration, Definition } from 'vscode-languageserver/node';
+import { Input, MetafontDocumentManager, SemanticToken, TokenData, TokenFlag, TokenType } from './metafontDocumentManager';
 import { joinRegexes } from './regexes';
-import path = require('path');
+import * as sparks from './sparks.json';
 
 
 let parseModeI = 0;
@@ -67,6 +63,7 @@ export type IdentifierInfo = {
   hover: string,
   tokenType?: TokenType,
   declarationType?: DeclarationType,
+  completionItemKind?: CompletionItemKind,
   replacement?: TokenRef
 };
 
@@ -273,7 +270,8 @@ export class MetafontParser {
           identifiers.set(declaredVariableRepresentation, {
             declarationTokens: [ { filePath: textDocument.uri, idx: i - 1 } ], // token before ; or , which broke the loop
             definitionTokens: [], // type declarations only declare
-            hover: `${replacedTokenStr} ${declaredVariableRepresentation}`
+            hover: `${replacedTokenStr} ${declaredVariableRepresentation}`,
+            completionItemKind: CompletionItemKind.Variable
           });
           if (endOfDeclarationList) {
             break;
@@ -312,15 +310,19 @@ export class MetafontParser {
           identifierInfo.hover += `\n ${rightHandHover.hover}`; // space for indentation
         }
 
-        // semantic highlighting for tokens defined by let
-        let tokenType: TokenType | undefined = undefined;
+        // semantic highlighting and completion for tokens defined by let
         const rightHandReplacedTokenStr = this.replaceTokenStr(identifiers, rightHandTokenStr);
-        if (keywordPattern.test(rightHandReplacedTokenStr)) {
-          tokenType = TokenType.keyword;
-        } else if (identifiers.has(rightHandTokenStr) && identifiers.get(rightHandTokenStr)!.tokenType) {
-          tokenType = identifiers.get(rightHandTokenStr)!.tokenType;
+        if (identifiers.has(rightHandTokenStr)) {
+          if (identifiers.get(rightHandTokenStr)!.tokenType !== undefined) {
+            identifierInfo.tokenType = identifiers.get(rightHandTokenStr)!.tokenType;
+          }
+          if (identifiers.get(rightHandTokenStr)!.completionItemKind !== undefined) {
+            identifierInfo.completionItemKind = identifiers.get(rightHandTokenStr)!.completionItemKind;
+          }
+        } else if (keywordPattern.test(rightHandReplacedTokenStr)) {
+          identifierInfo.tokenType = TokenType.keyword;
+          identifierInfo.completionItemKind = CompletionItemKind.Keyword;
         }
-        identifierInfo.tokenType = tokenType;
         identifiers.set(leftHandTokenStr, identifierInfo);
 
         if (['(', ')'].includes(rightHandTokenStr)) { // [The METAFONTbook, p 218]
@@ -451,7 +453,8 @@ export class MetafontParser {
           declarationTokens: [{ filePath: textDocument.uri, idx: declaredVariableI }],
           definitionTokens: [{ filePath: textDocument.uri, idx: declaredVariableI }],
           hover: hoverStr,
-          tokenType: TokenType.function
+          tokenType: TokenType.function,
+          completionItemKind: CompletionItemKind.Function
         });
         nestingStructure.push({ kind: NestingBlockKind.macro, parseMode: ParseMode.enddef });
         i--; // i will be increased by loop
@@ -473,7 +476,8 @@ export class MetafontParser {
           declarationTokens: [{ filePath: textDocument.uri, idx: i + 2 }],
           definitionTokens: [{ filePath: textDocument.uri, idx: i + 2 }],
           hover: hoverStr,
-          tokenType: TokenType.function
+          tokenType: TokenType.function, // TODO maybe operator?
+          completionItemKind: CompletionItemKind.Operator
         });
         nestingStructure.push({kind: NestingBlockKind.macro, parseMode: ParseMode.enddef});
         i += 4;
@@ -659,6 +663,10 @@ export class MetafontParser {
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
           declarationType = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.declarationType;
         };
+        let completionItemKind: CompletionItemKind | undefined;
+        if ((nestedBlockInfo.bodyTexts!).length === 1) {
+          completionItemKind = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.completionItemKind;
+        };
         let replacement: TokenRef | undefined;
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
           replacement = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.replacement;
@@ -669,7 +677,8 @@ export class MetafontParser {
           hover: hover,
           tokenType: tokenType,
           declarationType: declarationType,
-          replacement: replacement,
+          completionItemKind: completionItemKind,
+          replacement: replacement
         };
         identifiers.set(identifierName, identifierInfo);
       }

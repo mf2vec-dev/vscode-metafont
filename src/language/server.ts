@@ -1,4 +1,8 @@
+import { Position, TextDocument } from 'vscode-languageserver-textdocument';
 import {
+  CompletionItem,
+  CompletionItemKind,
+  CompletionParams,
   createConnection,
   DeclarationParams,
   DefinitionParams,
@@ -14,10 +18,9 @@ import {
   SemanticTokensBuilder,
   SemanticTokensParams
 } from 'vscode-languageserver/node';
-
 import { DocumentData, MetafontDocumentManager, TokenFlag, TokenType } from './metafontDocumentManager';
 import { numericTokenPattern } from './regexes';
-import { Position, TextDocument } from 'vscode-languageserver-textdocument';
+import * as sparks from './sparks.json';
 
 
 const serverName = 'METAFONT Language Server';
@@ -28,7 +31,9 @@ const tokenTypeList = Object.values(TokenType);
 connection.onInitialize((_initializeParams: InitializeParams) => {
   const result: InitializeResult = {
     capabilities: {
+      completionProvider: {}, // server provides it but without options
       declarationProvider: true,
+      definitionProvider: true,
       hoverProvider: true,
       semanticTokensProvider: {
         legend: {
@@ -36,8 +41,7 @@ connection.onInitialize((_initializeParams: InitializeParams) => {
           tokenModifiers: ['']
         },
         full: true
-      },
-      definitionProvider: true
+      }
     },
     serverInfo: {
       name: serverName
@@ -188,6 +192,58 @@ connection.onDeclaration((declarationParams: DeclarationParams) => {
       return documentData.declarations.get(tokenIdx);
     }
   }
+});
+
+connection.onCompletion((completionParams: CompletionParams) => {
+  const completionItems: CompletionItem[] = [];
+
+  // primitives
+  for (const primitiveStr of sparks.primitives) {
+    let completionItem: CompletionItem = {
+      label: primitiveStr,
+      detail: primitiveStr,
+      kind: CompletionItemKind.Keyword // TODO ?
+    };
+    completionItems.push(completionItem);
+  }
+  
+  // from document
+  // TODO this strategy is not ideal
+  const uri = completionParams.textDocument.uri;
+  const document = documentManager.documents.get(uri);
+  if (document === undefined) {
+    return completionItems;
+  }
+  const documentData = documentManager.documentData.get(uri);
+  if (documentData === undefined) {
+    return completionItems;
+  }
+  const identifiersAtEnd = documentData.identifiersAtEnd;
+  if (identifiersAtEnd === undefined) {
+    return completionItems;
+  }
+  const completionPosition = completionParams.position;
+  for (const [identifierStr, identifierInfo] of identifiersAtEnd) {
+    if (
+      identifierInfo.declarationTokens.every((tokenRef) => tokenRef.filePath === uri)
+      && identifierInfo.declarationTokens.every((tokenRef) => {
+        const declarationPosition = documentManager.getTokenRange(document, documentData.tokens[tokenRef.idx]);
+        return (
+          declarationPosition.end.line > completionPosition.line
+          || (declarationPosition.end.line === completionPosition.line && declarationPosition.end.character > completionPosition.character)
+        );
+      })
+    ) {
+      continue; // ignore identifiers declared in this document after completion position
+    }
+    let completionItem: CompletionItem = {
+      label: identifierStr,
+      detail: identifierInfo.hover,
+      kind: identifierInfo.completionItemKind
+    };
+    completionItems.push(completionItem);
+  }
+  return completionItems;
 });
 
 export type MfInputsRequestArgs = { uri: string };
