@@ -4,8 +4,21 @@ img/doc
 node_modules
   !node_modules/@vscode/codicons/dist/codicon.css
   !node_modules/@vscode/codicons/dist/codicon.ttf
-out/test
+out
+  !out/language/metafont.tmLanguage.json
+  !out/language/server.js
+  !out/webviews/src/geometryWebview.css
+  !out/webviews/src/geometryWebview.html
+  !out/webviews/src/multiGeometryWebview.js
+  !out/webviews/src/registerWebviewUiToolkit.js
+  !out/webviews/src/singleGeometryWebview.js
+  !out/webviews/src/tableWebview.css
+  !out/webviews/src/tableWebview.html
+  !out/webviews/src/tableWebview.js
+  !out/webviews/src/webview.css
+  !out/extension.js
 src
+.mf-project
 .eslintrc.json
 .gitignore
 .vscodeignore
