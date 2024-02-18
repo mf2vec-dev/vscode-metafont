@@ -2,7 +2,7 @@
   "name": "vscode-metafont",
   "displayName": "METAFONT",
   "description": "METAFONT Language Support",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "mf2vec-dev",
   "license": "MIT",
   "homepage": "https://github.com/mf2vec-dev/vscode-metafont",
