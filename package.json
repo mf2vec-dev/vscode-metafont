@@ -321,7 +321,7 @@
     "copyWebviews": "cp ./src/webviews/src/webview.css ./out/webviews/src/webview.css && npm run copyGeometryWebview && npm run copyTableWebview",
     "copyGeometryWebview": "cp ./src/webviews/src/geometryWebview.html ./out/webviews/src/geometryWebview.html && cp ./src/webviews/src/geometryWebview.css ./out/webviews/src/geometryWebview.css",
     "copyTableWebview": "cp ./src/webviews/src/tableWebview.html ./out/webviews/src/tableWebview.html && cp ./src/webviews/src/tableWebview.css ./out/webviews/src/tableWebview.css",
-    "copyTestFixtures": "cp -r ./src/test/fixtures/ ./out/test/"
+    "copyTestFixtures": "cp -r ./src/test/fixtures/ ./out/test/fixtures/"
   },
   "dependencies": {
     "@vscode/codicons": "^0.0.35",
