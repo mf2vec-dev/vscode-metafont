@@ -70,20 +70,15 @@ export function updateTransform(i: number) {
 }
 
 export function resetTransform(i: number) {
-  let leftWidth: number;
-  let rightWidth: number;
-  let totalHeight: number;
-  let height: number;
-  let depth: number;
-  let totalWidth: number;
   const dims = contentDims[i];
-  leftWidth = dims.contentLeftWidth;
-  rightWidth = dims.contentRightWidth;
-  totalWidth = dims.contentTotalWidth;
-  height = Math.max(...contentDims.map((dims) => dims.contentHeight));
-  depth = Math.max(...contentDims.map((dims) => dims.contentDepth));
-  totalHeight = Math.max(...contentDims.map((dims) => dims.contentTotalHeight));
-  const zoom = 0.75*Math.min(previews[i].clientWidth/totalWidth, previews[i].clientHeight/totalHeight);
+  const leftWidth = dims.contentLeftWidth;
+  const rightWidth = dims.contentRightWidth;
+  const height = Math.max(...contentDims.map((dims) => dims.contentHeight));
+  const depth = Math.max(...contentDims.map((dims) => dims.contentDepth));
+  const totalWidth = Math.max(...contentDims.map((dims) => dims.contentTotalWidth));
+  const totalHeight = Math.max(...contentDims.map((dims) => dims.contentTotalHeight));
+  const margin = 1/8*Math.min(previews[i].clientWidth, previews[i].clientHeight);
+  const zoom = Math.min((previews[i].clientWidth-2*margin)/totalWidth, (previews[i].clientHeight-2*margin)/totalHeight);
   previewTransforms[i] = {
     x: previews[i].clientWidth/2 + leftWidth*zoom/2 - rightWidth*zoom/2,
     y: previews[i].clientHeight/2 + height*zoom/2 - depth*zoom/2,
