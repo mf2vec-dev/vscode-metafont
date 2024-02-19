@@ -119,7 +119,7 @@ export function mfPicture2PreviewPicture(mfPicture: types.MfPicture): types.Prev
   return previewPicture;
 }
 
-type BoxLine = {
+export type BoxLine = {
   type: 'BoxLine';
   data: [[number, number], [number, number]];
   xGlyphPos: number;

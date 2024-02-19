@@ -1,15 +1,19 @@
+// eslint-disable-next-line @typescript-eslint/naming-convention
+import * as _ from 'lodash';
 import * as vscode from 'vscode';
+import { MfFileManager } from '../base/mfFileManager';
 import * as types from '../base/types';
 import { PreviewGeomItem } from '../base/types';
 import {
-  GeometryPreviewWebviewManager, getBoxLines, mfPath2PreviewPathData, mfPicture2PreviewPicture
+  BoxLine,
+  GeometryPreviewWebviewManager,
+  getBoxLines,
+  mfPath2PreviewPathData,
+  mfPicture2PreviewPicture
 } from './geometryPreviewWebviewManager';
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
 import { InteractionSpecificWebviewManager } from './webviewManager';
-// eslint-disable-next-line @typescript-eslint/naming-convention
-import * as _ from 'lodash';
-import { MfFileManager } from '../base/mfFileManager';
 
 export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager{
   // todo check all methods
@@ -51,10 +55,15 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
         ]
       }
     ];
-    let contentGeneralInfo;
-    let contentGeneralItems;
+    let contentGeneralInfo = {
+      contentHeight: 0,
+      contentDepth: 0,
+      contentLeftWidth: 0,
+      contentRightWidth: 0
+    };
+    let contentGeneralItems: BoxLine[] = [];
     let contentGeometryItems: types.PreviewGeomItem[] = [];
-    let rawPreviewItems = (this.getData() as Map<number, types.PreviewItem[]> | undefined);
+    let rawPreviewItems = this.getData() as Map<number, types.PreviewItem[]> | undefined;
     if (rawPreviewItems !== undefined && this.text !== undefined) {
       const encodedText: number[] = []; 
       for (let i = 0; i < this.text.length; i++) {
@@ -88,7 +97,6 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
       }
 
       let xGlyphPos = 0;
-      contentGeneralItems = [];
       for (let i = 0; i < encodedText.length; i++) {
         const codePoint = encodedText[i];
         // kerning pairs
@@ -128,7 +136,13 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
             curGlyphItems.push(previewPicture);
           }
           contentGeometryItems.push(...curGlyphItems);
+
           xGlyphPos += shipout.data.charwd;
+
+          contentGeneralInfo.contentHeight = Math.max(contentGeneralInfo.contentHeight, shipout.data.charht);
+          contentGeneralInfo.contentDepth = Math.max(contentGeneralInfo.contentDepth, shipout.data.chardp);
+          // Left width is 0.
+          contentGeneralInfo.contentRightWidth = xGlyphPos + shipout.data.charic;
         } else {
           // todo insert replacement char
           xGlyphPos += 10;
