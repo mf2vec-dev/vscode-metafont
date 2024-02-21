@@ -1,10 +1,23 @@
 import * as vscode from 'vscode';
 import * as types from '../base/types';
-import { ContentTypeSpecificWebviewManager, WebviewManager } from './webviewManager';
+import { ContentTypeSpecificWebviewManager, WebviewManager, WebviewMixinArgs } from './webviewManager';
+
+export type PreviewOption = {
+  option: string;
+  checked: boolean;
+};
 
 export abstract class GeometryPreviewWebviewManager extends WebviewManager implements ContentTypeSpecificWebviewManager {
   rawPreviewItems: types.PreviewItem[] | Map<number, types.PreviewItem[]> | undefined = undefined;
   multiGeometry = false;
+  configurationSection: string;
+
+  constructor(ctx: vscode.ExtensionContext, mixinArgs: WebviewMixinArgs, configurationSection: string) {
+    super(ctx, mixinArgs);
+    this.configurationSection = configurationSection;
+    vscode.workspace.onDidChangeConfiguration((configurationChangeEvent) => this.updatePreviewOptionsFromConfiguration(configurationChangeEvent));
+  }
+
   reset() {
     this.dirty = true;
   }
@@ -22,6 +35,112 @@ export abstract class GeometryPreviewWebviewManager extends WebviewManager imple
   activatePreviewOptions() {
     this.postMessage({
       command: 'activate-preview-options'
+    });
+  }
+
+  updateMultiPreviewSizeFromConfiguration() {
+    const glyphOverviewConfiguration = vscode.workspace.getConfiguration('vscode-metafont.previews.geometry.glyphOverview');
+    this.setMultiPreviewSize(
+      glyphOverviewConfiguration.get('previewHeight') || 150,
+      glyphOverviewConfiguration.get('previewWidthMin') || 150
+    );
+  }
+
+  setMultiPreviewSize(height: number, widthMin: number) {
+    this.postMessage({
+      command: 'set-multi-preview-size',
+      data: {
+        height: height+'px',
+        widthMin: widthMin+'px'
+      }
+    });
+  }
+
+  updatePreviewOptionsFromConfiguration(configurationChangeEvent: vscode.ConfigurationChangeEvent | undefined = undefined) {
+    const previewOptions: PreviewOption[] = [];
+    if (configurationChangeEvent === undefined || configurationChangeEvent.affectsConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility.box`)) {
+      const boxDefault: boolean | undefined = vscode.workspace.getConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility`).get('box');
+      if (boxDefault !== undefined) {
+        previewOptions.push({
+          option: 'preview-option-box-lines',
+          checked: boxDefault
+        });
+      }
+    }
+    if (configurationChangeEvent === undefined || configurationChangeEvent.affectsConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility.labels`)) {
+      const labelsDefault: boolean | undefined = vscode.workspace.getConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility`).get('labels');
+      if (labelsDefault !== undefined) {
+        previewOptions.push({
+          option: 'preview-option-labels',
+          checked: labelsDefault
+        });
+      }
+    }
+    if (configurationChangeEvent === undefined || configurationChangeEvent.affectsConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility.paths`)) {
+      const pathsDefault: string | undefined = vscode.workspace.getConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility`).get('paths');
+      if (pathsDefault !== undefined) {
+        switch (pathsDefault) {
+        case 'paths with control points':
+          previewOptions.push(
+            { option: 'preview-option-paths', checked: true }
+          );
+          break;
+        case 'paths without control points':
+          previewOptions.push(
+            { option: 'preview-option-paths', checked: true },
+            { option: 'preview-option-control-points', checked: false }
+          );
+          break;
+        case 'paths without points':
+          previewOptions.push(
+            { option: 'preview-option-paths', checked: true },
+            { option: 'preview-option-control-points', checked: false },
+            { option: 'preview-option-on-curve-points', checked: false }
+          );
+          break;
+        case 'invisible':
+          previewOptions.push(
+            { option: 'preview-option-paths', checked: false }
+          );
+        }
+      }
+    }
+    if (configurationChangeEvent === undefined || configurationChangeEvent.affectsConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility.picture`)) {
+      const pathsDefault: string | undefined = vscode.workspace.getConfiguration(`vscode-metafont.previews.geometry.${this.configurationSection}.defaultVisibility`).get('picture');
+      if (pathsDefault !== undefined) {
+        switch (pathsDefault) {
+        case 'picture with weights':
+          previewOptions.push(
+            { option: 'preview-option-pictures', checked: true },
+            { option: 'preview-option-pixel-values', checked: true },
+            { option: 'preview-option-crisp-edges', checked: false }
+          );
+          break;
+        case 'picture without weights':
+          previewOptions.push(
+            { option: 'preview-option-pictures', checked: true },
+            { option: 'preview-option-pixel-values', checked: false },
+            { option: 'preview-option-crisp-edges', checked: true }
+          );
+          break;
+        case 'invisible':
+          previewOptions.push(
+            { option: 'preview-option-pictures', checked: false },
+            { option: 'preview-option-pixel-values', checked: true },
+            { option: 'preview-option-crisp-edges', checked: false }
+          );
+        }
+      }
+    }
+    if (previewOptions.length > 0) {
+      this.setPreviewOption(previewOptions);
+    }
+  }
+
+  setPreviewOption(previewOptions: PreviewOption[]) {
+    this.postMessage({
+      command: 'set-preview-option',
+      data: previewOptions
     });
   }
 

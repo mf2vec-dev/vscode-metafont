@@ -9,12 +9,22 @@ import {
 } from './geometryPreviewWebviewManager';
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { SelectionWebviewManagerMixin } from './webviewInteractionMixins';
-import { InteractionSpecificWebviewManager } from './webviewManager';
+import { InteractionSpecificWebviewManager, WebviewMixinArgs } from './webviewManager';
 
 export abstract class GlyphPreviewWebviewManager extends SelectionWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager{
   rawPreviewItems: types.PreviewItem[] |undefined = undefined;
+
+  constructor(ctx: vscode.ExtensionContext, mixinArgs: WebviewMixinArgs) {
+    super(ctx, mixinArgs, 'glyphPreview');
+  }
+
   setUpWebview(ctx: vscode.ExtensionContext) {
     this.makeWebviewWithInteraction(ctx);
+  }
+
+  atStartup() {
+    this.activatePreviewOptions();
+    this.updatePreviewOptionsFromConfiguration();
   }
 
   refreshWebview() {
@@ -165,9 +175,6 @@ export class GlyphPreviewWebviewPanelManager extends PanelWebviewManagerMixin(Gl
       mfFileManager: mfFileManager
     });
   }
-  atStartup() {
-    this.activatePreviewOptions();
-  }
 }
 
 export class GlyphPreviewWebviewViewManager extends ViewWebviewMangerMixin(GlyphPreviewWebviewManager) {
@@ -176,8 +183,5 @@ export class GlyphPreviewWebviewViewManager extends ViewWebviewMangerMixin(Glyph
       webviewViewId: 'vscode-metafont-glyph-preview-view',
       mfFileManager: mfFileManager
     });
-  }
-  atStartup() {
-    this.activatePreviewOptions();
   }
 }

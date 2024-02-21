@@ -13,7 +13,7 @@ import {
 } from './geometryPreviewWebviewManager';
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
-import { InteractionSpecificWebviewManager } from './webviewManager';
+import { InteractionSpecificWebviewManager, WebviewMixinArgs } from './webviewManager';
 
 export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager{
   // todo check all methods
@@ -23,8 +23,18 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
   ligtableLigatureLines: types.MfLigtable['ligs'] = [];
   kerning = true;
   ligatures = true;
+
+  constructor(ctx: vscode.ExtensionContext, mixinArgs: WebviewMixinArgs) {
+    super(ctx, mixinArgs, 'fontPreview');
+  }
+
   setUpWebview(ctx: vscode.ExtensionContext) {
     this.makeWebviewWithInteraction(ctx);
+  }
+
+  atStartup() {
+    this.activatePreviewOptions();
+    this.updatePreviewOptionsFromConfiguration();
   }
 
   refreshWebview() {
@@ -248,9 +258,6 @@ export class FontPreviewWebviewPanelManager extends PanelWebviewManagerMixin(Fon
       mfFileManager: mfFileManager
     });
   }
-  atStartup() {
-    this.activatePreviewOptions();
-  }
 }
 
 export class FontPreviewWebviewViewManager extends ViewWebviewMangerMixin(FontPreviewWebviewManager) {
@@ -259,8 +266,5 @@ export class FontPreviewWebviewViewManager extends ViewWebviewMangerMixin(FontPr
       webviewViewId: 'vscode-metafont-font-preview-view',
       mfFileManager: mfFileManager
     });
-  }
-  atStartup() {
-    this.activatePreviewOptions();
   }
 }

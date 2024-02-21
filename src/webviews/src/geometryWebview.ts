@@ -48,6 +48,16 @@ export function setUp(multiGeom = false) {
       const previewOptionsContainer = document.getElementById('preview-options-container')!;
       previewOptionsContainer.style.display = 'block';
       break;
+    case 'set-multi-preview-size':
+      document.documentElement.style.setProperty('--multi-preview-height', message.data.height);
+      document.documentElement.style.setProperty('--multi-preview-width-min', message.data.widthMin);
+      break;
+    case 'set-preview-option':
+      for (const option of message.data) {
+        const optionCheckbox = document.getElementById(option.option) as HTMLInputElement;
+        optionCheckbox.checked = option.checked;
+      }
+      break;
     }
   });
 

@@ -304,6 +304,106 @@
           }
         ]
       }
+    ],
+    "configuration": [
+      {
+        "title": "METAFONT",
+        "properties": {
+          "vscode-metafont.previews.geometry.glyphPreview.defaultVisibility.box": {
+            "type": "boolean",
+            "default": true
+          },
+          "vscode-metafont.previews.geometry.glyphPreview.defaultVisibility.labels": {
+            "type": "boolean",
+            "default": true
+          },
+          "vscode-metafont.previews.geometry.glyphPreview.defaultVisibility.paths": {
+            "type": "string",
+            "default": "paths with control points",
+            "enum": [
+              "paths with control points",
+              "paths without control points",
+              "paths without points",
+              "invisible"
+            ]
+          },
+          "vscode-metafont.previews.geometry.glyphPreview.defaultVisibility.picture": {
+            "type": "string",
+            "default": "picture with weights",
+            "enum": [
+              "picture with weights",
+              "picture without weights",
+              "invisible"
+            ]
+          },
+          "vscode-metafont.previews.geometry.glyphOverview.previewHeight": {
+            "type": "number",
+            "default": 150,
+            "minimum": 20,
+            "maximum": 1000
+          },
+          "vscode-metafont.previews.geometry.glyphOverview.previewWidthMin": {
+            "type": "number",
+            "default": 150,
+            "minimum": 20,
+            "maximum": 1000
+          },
+          "vscode-metafont.previews.geometry.glyphOverview.defaultVisibility.box": {
+            "type": "boolean",
+            "default": true
+          },
+          "vscode-metafont.previews.geometry.glyphOverview.defaultVisibility.labels": {
+            "type": "boolean",
+            "default": false
+          },
+          "vscode-metafont.previews.geometry.glyphOverview.defaultVisibility.paths": {
+            "type": "string",
+            "default": "invisible",
+            "enum": [
+              "paths with control points",
+              "paths without control points",
+              "paths without points",
+              "invisible"
+            ]
+          },
+          "vscode-metafont.previews.geometry.glyphOverview.defaultVisibility.picture": {
+            "type": "string",
+            "default": "picture without weights",
+            "enum": [
+              "picture with weights",
+              "picture without weights",
+              "invisible"
+            ]
+          },
+          "vscode-metafont.previews.geometry.fontPreview.defaultVisibility.box": {
+            "type": "boolean",
+            "default": true
+          },
+          "vscode-metafont.previews.geometry.fontPreview.defaultVisibility.labels": {
+            "type": "boolean",
+            "default": false
+          },
+          "vscode-metafont.previews.geometry.fontPreview.defaultVisibility.paths": {
+            "type": "string",
+            "default": "invisible",
+            "enum": [
+              "paths with control points",
+              "paths without control points",
+              "paths without points",
+              "invisible"
+            ]
+          },
+          "vscode-metafont.previews.geometry.fontPreview.defaultVisibility.picture": {
+            "type": "string",
+            "default": "picture without weights",
+            "enum": [
+              "picture with weights",
+              "picture without weights",
+              "invisible"
+            ]
+          }
+        }
+      }
     ]
   },
   "capabilities": {},

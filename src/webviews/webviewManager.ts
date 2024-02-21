@@ -45,7 +45,7 @@ export type ContentSpecificWebviewManagerConstructor = abstract new (...args: an
 export type WebviewManagerConstructor = abstract new (...args: any[]) => WebviewManager;
 type WebviewContainer = vscode.WebviewPanel | vscode.WebviewView;
 
-type WebviewMixinArgs = {
+export type WebviewMixinArgs = {
   webviewViewId?: string;
   webviewPanelTypeId?: string;
   webviewPanelTitle?: string;

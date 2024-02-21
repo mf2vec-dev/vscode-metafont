@@ -7,12 +7,17 @@ import {
 import { parsePathString, parsePictureString } from './previewMfRunner';
 import { ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FileIndependentWebviewManagerMixin } from './webviewInteractionMixins';
-import { InteractionSpecificWebviewManager } from './webviewManager';
+import { InteractionSpecificWebviewManager, WebviewMixinArgs } from './webviewManager';
 
 // Unfortunately, vscode doesn't expose contributes.menus for watch view (there is no debug/watch/context).
 
 export abstract class DebugExpressionPreviewWebviewManager extends FileIndependentWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager {
   expr?: string;
+
+  constructor(ctx: vscode.ExtensionContext, mixinArgs: WebviewMixinArgs) {
+    super(ctx, mixinArgs, 'debugExpression');
+  }
+
   setUpWebview(ctx: vscode.ExtensionContext) {
     this.makeWebviewWithInteraction(ctx);
     this.webview = this.webview!;

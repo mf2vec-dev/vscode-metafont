@@ -8,13 +8,32 @@ import {
 } from './geometryPreviewWebviewManager';
 import { PanelWebviewManagerMixin, ViewWebviewMangerMixin } from './webviewContainerMixins';
 import { FontWebviewManagerMixin } from './webviewInteractionMixins';
-import { InteractionSpecificWebviewManager } from './webviewManager';
+import { InteractionSpecificWebviewManager, WebviewMixinArgs } from './webviewManager';
 
 export abstract class GlyphOverviewWebviewManager extends FontWebviewManagerMixin(GeometryPreviewWebviewManager) implements InteractionSpecificWebviewManager{
   rawPreviewItems: Map<number, types.PreviewItem[]> | undefined = undefined;
   multiGeometry = true; // overwrite GeometryPreviewWebviewManager default
+
+  constructor(ctx: vscode.ExtensionContext, mixinArgs: WebviewMixinArgs) {
+    super(ctx, mixinArgs, 'glyphOverview');
+    vscode.workspace.onDidChangeConfiguration((configurationChangeEvent) => {
+      if (
+        configurationChangeEvent.affectsConfiguration('vscode-metafont.previews.geometry.glyphOverview.previewHeight')
+        || configurationChangeEvent.affectsConfiguration('vscode-metafont.previews.geometry.glyphOverview.previewWidthMin')
+      ) {
+        this.updateMultiPreviewSizeFromConfiguration();
+      }
+    });
+  }
+
   setUpWebview(ctx: vscode.ExtensionContext) {
     this.makeWebviewWithInteraction(ctx);
+  }
+
+  atStartup() {
+    this.activatePreviewOptions();
+    this.updateMultiPreviewSizeFromConfiguration();
+    this.updatePreviewOptionsFromConfiguration();
   }
 
   refreshWebview() {
@@ -135,9 +154,6 @@ export class GlyphOverviewWebviewPanelManager extends PanelWebviewManagerMixin(G
       mfFileManager: mfFileManager
     });
   }
-  atStartup() {
-    this.activatePreviewOptions();
-  }
 }
 
 export class GlyphOverviewWebviewViewManager extends ViewWebviewMangerMixin(GlyphOverviewWebviewManager) {
@@ -146,8 +162,5 @@ export class GlyphOverviewWebviewViewManager extends ViewWebviewMangerMixin(Glyp
       webviewViewId: 'vscode-metafont-glyph-overview-view',
       mfFileManager: mfFileManager
     });
-  }
-  atStartup() {
-    this.activatePreviewOptions();
   }
 }
