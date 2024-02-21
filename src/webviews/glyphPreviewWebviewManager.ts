@@ -37,10 +37,10 @@ export abstract class GlyphPreviewWebviewManager extends SelectionWebviewManager
     let belowCursorItems;
     let rawPreviewItems = (this.getData() as types.PreviewItem[] | undefined);
     if (rawPreviewItems !== undefined) {
+      const shipouts = rawPreviewItems.filter(types.isPreviewShipout);
       const lineNumber = this.locked ? this.locked.lineNumber : activeMfFileLineNumber;
       const absPath = this.locked ? this.locked.absPath : activeMfFileAbsPath;
       if (absPath !== undefined && lineNumber !== undefined) {
-        const shipouts = rawPreviewItems.filter(types.isPreviewShipout);
         let previousShipout: types.PreviewShipout | undefined;
         let nextShipout: types.PreviewShipout | undefined;
         if (shipouts.length > 0) {
@@ -117,7 +117,8 @@ export abstract class GlyphPreviewWebviewManager extends SelectionWebviewManager
             belowCursorItems = curGlyphItems.filter((d) => d.filePath === absPath && d.line > lineNumber);
           }
         }
-      } else {
+      } else if (shipouts.length === 1) {
+        // If the cursor position is unknown, only show everything if there is exactly one shipout.
         aboveCursorItems = this.rawPreviewItems;
       }
     }
