@@ -1,6 +1,22 @@
 # Changelog
 
 
+## 0.2.0 - 2024-04-21
+
+### Added
+
+- Add options for default visibility of box, labels, paths and picture for glyph overview as well as font preview.
+- Add file decoration showing the file category.
+- Add support for drag&drop of inputs to categories in file overview in project explorer.
+
+### Fixed
+
+- Fix bug showing all glyphs on top of each other if file/line of current cursor is unknown.
+- Fix scaling bug in font preview.
+- Improve scaling geometry previews.
+- Fix hidden elements in previews by drawing pictures first.
+
+
 ## 0.1.0 - 2024-02-18
 
 ### Added
