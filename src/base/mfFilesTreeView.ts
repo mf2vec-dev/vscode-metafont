@@ -175,7 +175,7 @@ class MfFilesDragAndDropController implements vscode.TreeDragAndDropController<t
   constructor(public mfFilesTreeDataProvider: MfFilesTreeDataProvider) {}
   handleDrag(source: readonly types.MfFileOrCategory[], dataTransfer: vscode.DataTransfer, token: vscode.CancellationToken): void | Thenable<void> {
     for (const s of source) {
-      if (types.isMfFile(s)) {
+      if (types.isMfFile(s) || types.isMfFileInput(s)) {
         this.dragged.push(s.uri);
       }
     }

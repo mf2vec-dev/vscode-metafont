@@ -94,7 +94,7 @@ export class MfFileManager {
     }
     // apply ids
     for (const uri of uris) {
-      const mfFile = this.mfFiles.find((f) => uri === f.uri);
+      const mfFile = this.mfFiles.find((f) => uri.toString() === f.uri.toString());
       if (mfFile !== undefined) {
         mfFile.categoryIds = ids;
       }
