@@ -65,7 +65,11 @@ export function setUp(multiGeom = false) {
 }
 
 function addToPreview(preview: number, previewObjects: any[], grayedOut=false) {
-  for (const obj of previewObjects) {
+  // Draw pictures first, otherwise they may hide other elements.
+  for (const obj of previewObjects.filter((obj) => obj.type === 'Picture')) {
+    drawGeom(preview, obj, grayedOut);
+  }
+  for (const obj of previewObjects.filter((obj) => obj.type !== 'Picture')) {
     drawGeom(preview, obj, grayedOut);
   }
 }
