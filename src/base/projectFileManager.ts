@@ -34,10 +34,12 @@ export class ProjectFileManager {
         return;
       }
       if (this.mfFileManager !== undefined) {
+        // TODO use this.mfFileManager.setCategoryIds() ?
         for (const projectFilMfFile of data.mfFiles) {
           const mfFile = this.mfFileManager.mfFiles.find((f) => projectFilMfFile.path === vscode.workspace.asRelativePath(f.uri));
           if (mfFile !== undefined) {
             mfFile.categoryIds = projectFilMfFile.categoryIds;
+            this.mfFileManager.mfFileCategoryDecorationProvider?._onDidChangeFileDecorations.fire(mfFile.uri);
           }
         }
         this.mfFileManager.callRefreshCallbacks();

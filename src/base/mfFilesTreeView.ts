@@ -12,9 +12,12 @@ export function activateMfFilesView(ctx: vscode.ExtensionContext, mfFileManager:
 
   // initial fill with all .mf files
   mfFileManager.refreshFromFiles();
-  const mfFilesDecorationProvider = new MfFilesDecorationProvider(mfFileManager);
-  ctx.subscriptions.push(vscode.window.registerFileDecorationProvider(mfFilesDecorationProvider));
-  mfFileManager.mfFilesDecorationProvider = mfFilesDecorationProvider;
+  const mfDefaultJobDecorationProvider = new MfDefaultJobDecorationProvider(mfFileManager);
+  ctx.subscriptions.push(vscode.window.registerFileDecorationProvider(mfDefaultJobDecorationProvider));
+  mfFileManager.mfDefaultJobDecorationProvider = mfDefaultJobDecorationProvider;
+  const mfFileCategoryDecorationProvider = new MfFileCategoryDecorationProvider(mfFileManager);
+  ctx.subscriptions.push(vscode.window.registerFileDecorationProvider(mfFileCategoryDecorationProvider));
+  mfFileManager.mfFileCategoryDecorationProvider = mfFileCategoryDecorationProvider;
 
   const mfFilesViewOptions: vscode.TreeViewOptions<types.MfFileOrCategory> = {
     canSelectMany: true,
@@ -26,7 +29,7 @@ export function activateMfFilesView(ctx: vscode.ExtensionContext, mfFileManager:
   ctx.subscriptions.push(mfFilesView);
 }
 
-export class MfFilesDecorationProvider {
+export class MfDefaultJobDecorationProvider implements vscode.FileDecorationProvider {
   readonly _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[]> = new vscode.EventEmitter< vscode.Uri | vscode.Uri[]>();
   readonly onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[]> = this._onDidChangeFileDecorations.event;
   constructor(public mfFileManager: MfFileManager) {}
@@ -37,6 +40,42 @@ export class MfFilesDecorationProvider {
         propagate: true,
         tooltip: "Default job"
       };
+      return fileDecoration;
+    }
+  }
+}
+
+export class MfFileCategoryDecorationProvider implements vscode.FileDecorationProvider {
+  readonly _onDidChangeFileDecorations: vscode.EventEmitter<vscode.Uri | vscode.Uri[]> = new vscode.EventEmitter< vscode.Uri | vscode.Uri[]>();
+  readonly onDidChangeFileDecorations: vscode.Event<vscode.Uri | vscode.Uri[]> = this._onDidChangeFileDecorations.event;
+  constructor(public mfFileManager: MfFileManager) {}
+  provideFileDecoration(uri: vscode.Uri, token: vscode.CancellationToken) {
+    const mfFile = this.mfFileManager.mfFiles.find((f) => f.uri.toString() === uri.toString());
+    if (mfFile !== undefined && mfFile.categoryIds.length > 0) {
+      const catId = mfFile.categoryIds[0];
+      let fileDecoration: vscode.FileDecoration | undefined;
+      // Note: badge cannot be longer than 2 characters
+      if (catId === types.MfFileCategoryId.param) {
+        fileDecoration = {
+          badge: "Pm",
+          tooltip: "Parameter file"
+        };
+      } else if (catId === types.MfFileCategoryId.driver) {
+        fileDecoration = {
+          badge: "Dr",
+          tooltip: "Driver file"
+        };
+      } else if (catId === types.MfFileCategoryId.program) {
+        fileDecoration = {
+          badge: "Pr",
+          tooltip: "Program file"
+        };
+      } else if (catId === types.MfFileCategoryId.base) {
+        fileDecoration = {
+          badge: "Bs",
+          tooltip: "Base file"
+        };
+      } 
       return fileDecoration;
     }
   }

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { MfFilesDecorationProvider } from './mfFilesTreeView';
+import { MfDefaultJobDecorationProvider, MfFileCategoryDecorationProvider } from './mfFilesTreeView';
 import { ProjectFileManager } from './projectFileManager';
 import * as types from './types';
 
@@ -12,7 +12,8 @@ export async function activateMfFileManager(ctx: vscode.ExtensionContext, projec
 
 export class MfFileManager {
   defaultJobPath: string | undefined;
-  mfFilesDecorationProvider: MfFilesDecorationProvider | undefined;
+  mfDefaultJobDecorationProvider: MfDefaultJobDecorationProvider | undefined;
+  mfFileCategoryDecorationProvider: MfFileCategoryDecorationProvider | undefined;
   static mfFileUnknownCategory: types.MfFileCategory = { label: 'unknown category', id: types.MfFileCategoryId.unknown };
   static mfFileKnownCategories: types.MfFileCategory[] = [
     { label: 'base files', id: types.MfFileCategoryId.base },
@@ -87,7 +88,7 @@ export class MfFileManager {
   }
 
   setCategoryIds(uris: vscode.Uri[], ids: types.MfFileCategoryId[]) {
-    // remove unknown from ids it is not the only category
+    // remove unknown from ids if it is not the only category
     if (ids.length !== 1 && !ids.includes(types.MfFileCategoryId.unknown)) {
       ids = ids.filter((id) => id !== types.MfFileCategoryId.unknown);
     }
@@ -97,6 +98,7 @@ export class MfFileManager {
       if (mfFile !== undefined) {
         mfFile.categoryIds = ids;
       }
+      this.mfFileCategoryDecorationProvider?._onDidChangeFileDecorations.fire(uri);
     }
     this.projectFileManager.updateProjectFile();
   }
@@ -113,10 +115,10 @@ export class MfFileManager {
 
   setDefaultJobPath(path: string) {
     if (this.defaultJobPath !== undefined) {
-      this.mfFilesDecorationProvider?._onDidChangeFileDecorations.fire(vscode.Uri.file(this.defaultJobPath)); // remove old
+      this.mfDefaultJobDecorationProvider?._onDidChangeFileDecorations.fire(vscode.Uri.file(this.defaultJobPath)); // remove old
     }
     this.defaultJobPath = path;
-    this.mfFilesDecorationProvider?._onDidChangeFileDecorations.fire(vscode.Uri.file(this.defaultJobPath)); // set new
+    this.mfDefaultJobDecorationProvider?._onDidChangeFileDecorations.fire(vscode.Uri.file(this.defaultJobPath)); // set new
     this.projectFileManager.updateProjectFile();
   }
 }
