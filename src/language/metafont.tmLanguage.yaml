@@ -45,9 +45,9 @@ _patterns: # everything here needs to be escaped as needed for regex
   - &accentClass !join ['[', *accentClassChars, ']']
   - &oBracketClass !join ['[', *oBracketClassChars, ']']
   - &cBracketClass !join ['[', *cBracketClassChars, ']']
-  - &braceClass  !join ['[', *braceClassChars, ']']
-  - &braceClass  !join ['[', *braceClassChars, ']']
-  - &periodClass  !join ['[', *periodClassChars, ']']
+  - &braceClass !join ['[', *braceClassChars, ']']
+  - &braceClass !join ['[', *braceClassChars, ']']
+  - &periodClass !join ['[', *periodClassChars, ']']
 
   # complement classes
   - &letterCClass !join ['[^', *letterClassChars, ']']
@@ -60,9 +60,9 @@ _patterns: # everything here needs to be escaped as needed for regex
   - &accentCClass !join ['[^', *accentClassChars, ']']
   - &oBracketCClass !join ['[^', *oBracketClassChars, ']']
   - &cBracketCClass !join ['[^', *cBracketClassChars, ']']
-  - &braceCClass  !join ['[^', *braceClassChars, ']']
-  - &braceCClass  !join ['[^', *braceClassChars, ']']
-  - &periodCClass  !join ['[^', *periodClassChars, ']']
+  - &braceCClass !join ['[^', *braceClassChars, ']']
+  - &braceCClass !join ['[^', *braceClassChars, ']']
+  - &periodCClass !join ['[^', *periodClassChars, ']']
 
   # token patterns
   - &letterToken !join [*letterClass, '+']
