@@ -12,6 +12,9 @@ export function joinRegexes(regexes: (RegExp | string)[], flags?: string) {
   return regex;
 }
 
+export const letterTokenLb = /(?<=^|[^A-Za-z_])/;
+export const letterTokenRb = /(?=$|[^A-Za-z_])/;
+
 export const symbolicTokenPattern = joinRegexes([
   /[A-Za-z_]+|[<=>:|]+|[`']+|[+-]+|[\/*\\]+|[!?]+|[#&@$]+|[\^~]+/,
   /|\[+|\]+|[\{\}]+/,

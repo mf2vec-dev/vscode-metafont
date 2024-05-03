@@ -7,7 +7,7 @@ import {
   ServerOptions,
   TransportKind
 } from 'vscode-languageclient/node';
-import { symbolicOrNumericTokenPattern } from './regexes';
+import { joinRegexes, letterTokenLb, letterTokenRb, symbolicOrNumericTokenPattern } from './regexes';
 import { OpenTextDocumentRequestArgs, OpenTextDocumentResponse } from './server';
 
 
@@ -109,8 +109,54 @@ function specifyLanguageConfiguration() {
   const languageConfiguration: vscode.LanguageConfiguration = {
     wordPattern: symbolicOrNumericTokenPattern,
     indentationRules: {
-      increaseIndentPattern: /^(?:(?!%).)*(?:\(|\[|\{|(?<=^|[^A-Za-z_])(?:(?:var|primary|secondary|tertiary)?def|if|else(?:if)?|for(?:suffixes|ever)?)(?=$|[^A-Za-z_])).*$/,
-      decreaseIndentPattern: /(?:(?!%).)*(?:\)|\]|\}|(?<=^|[^A-Za-z_])(?:enddef|else(?:if)?|fi|endfor)(?=$|[^A-Za-z_])).*$/
+      increaseIndentPattern: joinRegexes([
+        /* eslint-disable indent */
+        /^/, // start at beginning of line to catch % before match
+        /(?:(?!%).)*/, // no comment before
+        '(?:',
+          // parenthesis, brackets and braces that are not closed on the same line
+          /\([^)]*/,
+          /|/,
+          /\[[^\]]*/,
+          /|/,
+          /\{[^}]*/,
+          /|/,
+          letterTokenLb,
+          '(?:',
+            /(?:var|primary|secondary|tertiary)?def/, letterTokenRb,
+            '(?:(?!', letterTokenLb, /enddef/, letterTokenRb, ').)*',
+            /|/,
+            /(?:if|else(?:if)?)/, letterTokenRb,
+            '(?:(?!', letterTokenLb, /fi/, letterTokenRb, ').)*',
+            /|/,
+            /for(?:suffixes|ever)?/, letterTokenRb,
+            '(?:(?!', letterTokenLb, /endfor/, letterTokenRb, ').)*',
+            /|/,
+            /begingroup/, letterTokenRb,
+            '(?:(?!', letterTokenLb, /endgroup/, letterTokenRb, ').)*',
+          ')',
+        ')', // no .* here, otherwise check for enddef etc. doesn't work
+        /$/ // parse to the end to make sure there is no enddef / fi / endfor in the same line
+        /* eslint-enable indent */
+      ]),
+      decreaseIndentPattern: joinRegexes([
+        /* eslint-disable indent */
+        /^/,
+        /(?:(?!%).)*/,
+        '(?:',
+          /\)/,
+          /|/,
+          /\]/,
+          /|/,
+          /\}/,
+          /|/,
+          letterTokenLb,
+          /(?:fi|e(?:lse(?:if)?|nd(?:def|for|group)))/, // fi|else|elseif|enddef|endfor|endgroup
+          letterTokenRb,
+        ').*',
+        /$/
+        /* eslint-enable indent */
+      ])
     }
   };
   vscode.languages.setLanguageConfiguration('metafont', languageConfiguration);
