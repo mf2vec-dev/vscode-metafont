@@ -72,7 +72,7 @@ _patterns: # everything here needs to be escaped as needed for regex
   - &timesSlashToken !join [*timesSlashClass, '+']
   - &markToken !join [*markClass, '+']
   - &symbolToken !join [*symbolClass, '+']
-  - &nonAmpersandSymbolToken !join ['(?:#@$|', *symbolClass, '{2,})'] # non-ampersand single character or multiple characters
+  - &nonAmpersandSymbolToken !join ['(?:#@\$|', *symbolClass, '{2,})'] # non-ampersand single character or multiple characters
   - &accentToken !join [*accentClass, '+']
   - &oBracketToken !join [*oBracketClass, '+']
   - &cBracketToken !join [*cBracketClass, '+']
