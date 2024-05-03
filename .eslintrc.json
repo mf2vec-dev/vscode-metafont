@@ -13,6 +13,7 @@
         "@typescript-eslint/naming-convention": "warn",
         "@typescript-eslint/semi": "warn",
         "arrow-parens": "warn",
+        "comma-spacing": "warn",
         "curly": "warn",
         "eqeqeq": "warn",
         "indent": ["warn", 2],
