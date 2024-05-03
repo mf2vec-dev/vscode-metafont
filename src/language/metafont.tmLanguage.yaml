@@ -12,6 +12,13 @@ _patterns: # everything here needs to be escaped as needed for regex
         '\s*',
       ')?'
     ]
+  - &tokenSeparatorDot !join [ # tokenSeparator which must include a dot
+      '\s*', # todo newline doesn't work
+      '(?<!\d|\.)',
+      '\.',
+      '(?!\d|\.)',
+      '\s*'
+    ]
 
   # character groups of metafont symbolic tokens
   # [The METAFONTbook, p.51, character table]
@@ -162,6 +169,13 @@ _patterns: # everything here needs to be escaped as needed for regex
         *integerToken,
       ')'
     ]
+  - &numericSuffix !join [
+      '(?:',
+        *numericToken,
+        '|',
+        '\[[^\]]+?\]', # numeric expression (bracket pair without closing bracket between)
+      ')'
+    ]
 
   # complex patterns
   - &variable !join [
@@ -171,9 +185,28 @@ _patterns: # everything here needs to be escaped as needed for regex
         '(?:',
           *variableTagBounded, # tag
           '|',
-          *numericToken,
+          *numericSuffix,
+        ')',
+      ')*'
+    ]
+  - &variableDot !join [ # only variables where variable (symbolic) tokens are separated by dot
+      *variableTagBounded,
+      '(?:',
+        '(?<![\d\]])', # if variable token before (no numeric token ending with digit or ] )
+        '(?:', # then
+          *tokenSeparatorDot, # require dot to match another variable token
+          *variableTagBounded,
           '|',
-          '\[[^\]]+?\]', # numeric expression (bracket pair without closing bracket between)
+          *tokenSeparator,
+          *numericSuffix,
+        ')',
+        '|',
+        '(?<=[\d\]])', # else (explicit) no variable token before (numeric token before)
+        *tokenSeparator, # no dot is required
+        '(?:',
+          *variableTagBounded,
+          '|',
+          *numericSuffix,
         ')',
       ')*'
     ]
@@ -670,7 +703,7 @@ patterns:
         name: keyword.operator.is.metafont
   - name: entity.name.function.metafont # called macros # needs to be after defs
     match: !join [
-      *variable,
+      *variableDot,
       '(?=',
         *tokenSeparator,
         '\(',
