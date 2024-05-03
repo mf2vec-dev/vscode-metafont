@@ -497,6 +497,19 @@ patterns:
         *relationTokenRb,
       ')?'
     ]
+  # begingroup/endgroup
+  - name: keyword.other.begingroup.metafont
+    match: !join [
+      *letterTokenLb,
+      'begingroup',
+      *letterTokenRb
+    ]
+  - name: keyword.other.endgroup.metafont
+    match: !join [
+      *letterTokenLb,
+      'endgroup',
+      *letterTokenRb
+    ]
   # other out of syntax keywords
   - name: meta.input.metafont
     match: !join [
