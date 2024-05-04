@@ -200,7 +200,8 @@
           "id": "vscode-metafont-debug-expression-preview-view",
           "name": "Expression Preview",
           "contextualTitle": "METAFONT Debugging Expression Preview",
-          "when": "debugType == metafont"
+          "when": "debugType == metafont",
+          "visibility": "collapsed"
         }
       ],
       "vscode-metafont-project-explorer": [
@@ -214,7 +215,8 @@
           "type": "webview",
           "id": "vscode-metafont-glyph-table-view",
           "name": "Glyphs",
-          "contextualTitle": "METAFONT Glyph Table"
+          "contextualTitle": "METAFONT Glyph Table",
+          "visibility": "collapsed"
         },
         {
           "type": "webview",
@@ -238,7 +240,8 @@
           "type": "webview",
           "id": "vscode-metafont-glyph-preview-view",
           "name": "Glyph Preview",
-          "contextualTitle": "METAFONT Glyph Preview"
+          "contextualTitle": "METAFONT Glyph Preview",
+          "visibility": "collapsed"
         }
       ],
       "vscode-metafont-panel-view-container": [
