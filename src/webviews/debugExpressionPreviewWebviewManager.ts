@@ -58,7 +58,12 @@ export abstract class DebugExpressionPreviewWebviewManager extends FileIndepende
       value: this.expr,
       messageCommand: 'expr' // command is handled by method below
     }];
-    this.sendRefreshWithInteraction(titleBarItems, undefined, undefined, previewItems, undefined);
+    this.sendRefreshWithInteraction(titleBarItems, {
+      contentGeneralInfo: undefined,
+      contentGeneralItems: undefined,
+      contentItems: previewItems,
+      futureItems: undefined
+    });
   }
   handleOtherMessages(message: any) {
     switch (message.command) {

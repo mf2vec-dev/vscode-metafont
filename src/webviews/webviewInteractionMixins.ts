@@ -258,7 +258,7 @@ export function SelectionWebviewManagerMixin<TBase extends ContentSpecificWebvie
       }
       this.refreshWebview();
     }
-    sendRefreshWithInteraction(titleBarItems: {[key: string]: any}[] = [], contentGeneralInfo?: {[key: string]: any}, contentGeneralItems?: {[key: string]: any}[], contentItems?: {[key: string]: any}[], futureContentItems?: {[key: string]: any}[]): void {
+    sendRefreshWithInteraction(titleBarItems: {[key: string]: any}[], ...args: any) {
       // first line
       titleBarItems.push({
         label: 'first\xA0line',
@@ -323,7 +323,7 @@ export function SelectionWebviewManagerMixin<TBase extends ContentSpecificWebvie
         items: showItems
       });
   
-      super.sendRefresh(titleBarItems, contentGeneralInfo, contentGeneralItems, contentItems, futureContentItems);
+      super.sendRefresh(titleBarItems, ...args);
     }
     makeWebviewWithInteraction(ctx: vscode.ExtensionContext): void {
       super.makeWebviewWithInteraction(ctx);
