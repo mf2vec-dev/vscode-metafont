@@ -317,7 +317,7 @@ patterns:
   - name: keyword.control.loop.metafont
     match: !join [
       *letterTokenLb,
-      '(?:for(?:suffixes|ever)?|exitif|endfor)',
+      '(?:for(?:suffixes|ever)?|step|until|exitif|endfor)',
       *letterTokenRb
     ]
   # symbolic operators
