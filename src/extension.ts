@@ -6,6 +6,7 @@ import { activateMfFilesView } from './base/mfFilesTreeView';
 import { activateProjectFileManager } from './base/projectFileManager';
 import { MetafontDebugSession } from './debug/metafontDebugSession';
 import { activateLanguageFeatures } from './language/languageFeatures';
+import { activateTesting } from './testing/testing';
 import {
   DebugExpressionPreviewWebviewViewManager
 } from './webviews/debugExpressionPreviewWebviewManager';
@@ -57,6 +58,8 @@ export async function activate(ctx: vscode.ExtensionContext) {
   );
 
   activateDebug(ctx);
+
+  activateTesting(ctx);
 }
 
 function activateActiveFileWatchers(ctx: vscode.ExtensionContext) {

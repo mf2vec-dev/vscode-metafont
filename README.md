@@ -58,6 +58,9 @@ You can also package the extension yourself:
 - Debugging\
   Set breakpoints to pause METAFONT on a specific line and inspect variables. Besides showing the values of `numeric`, `pair` and `transform` variables, the debugger also provides a visualization of `path` and `picture` variables and expressions.\
   Currently, debugging inside definitions/macros or loops is not supported.
+- Testing\
+  Run METAFONT files as tests. This can be useful to check whether complex macros work as expected when modifying/extending/optimizing them.\
+  All `.mf` files prefixed with `test_` are treated as tests. If METAFONT detects an error (including `errmessage`), the test fails, otherwise it passes.
 
 **Note:** The previews should update every time you save a METAFONT file or change a preview option. Note that METAFONT needs to re-run in many cases which might take a few seconds. To speed this up, comment out code you are not working on (e.g. all but one program file `input` in the driver file or characters you are not editing).
 
