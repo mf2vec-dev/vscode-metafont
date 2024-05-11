@@ -1,3 +1,4 @@
+import { spawnSync } from 'child_process';
 // eslint-disable-next-line @typescript-eslint/naming-convention
 import * as _ from 'lodash';
 import { existsSync } from 'node:fs';
@@ -505,9 +506,18 @@ export class MetafontParser {
         if (filenameMatch === null || filenameMatch.indices === undefined) {
           break;
         }
+        // turn relative paths into absolute paths using cwd (workspace)
         let inputPath = path.resolve(filenameMatch[1]);
         if (!inputPath.endsWith('.mf') && !existsSync(inputPath) && existsSync(inputPath + '.mf')) {
           inputPath += '.mf';
+        }
+        if (!existsSync(inputPath)) {
+          // cannot find in cwd (workspace)
+          // use kpsewhich to find file
+          const ret = spawnSync('kpsewhich', ['-format=mf', filenameMatch[1]]);
+          if (ret.status === 0) {
+            inputPath = ret.stdout.toString().split('\n')[0].trim(); // first line of output
+          }
         }
         const inputUri = pathToFileURL(inputPath).toString();
         const startChar = inputTokenRange.end.character + filenameMatch.indices[1][0];
