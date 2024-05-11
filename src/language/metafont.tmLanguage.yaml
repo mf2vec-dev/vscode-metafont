@@ -509,7 +509,7 @@ patterns:
         '|outer|inner', # protection command
         '|everyjob',
         '|show(?:variable|tokens|dependencies|stats)?', # show command
-        '|message|errmessage|errhelp', # message command
+        '|message|err(?:message|help)', # message command
         '|(?:batch|nonstop|scroll|errorstop)mode', # mode command
         '|addto|cull', # picture command
         '|display|inwindow', # display command
@@ -531,13 +531,13 @@ patterns:
       ')?'
     ]
   # begingroup/endgroup
-  - name: keyword.other.begingroup.metafont
+  - name: keyword.other.grouping.begingroup.metafont
     match: !join [
       *letterTokenLb,
       'begingroup',
       *letterTokenRb
     ]
-  - name: keyword.other.endgroup.metafont
+  - name: keyword.other.grouping.endgroup.metafont
     match: !join [
       *letterTokenLb,
       'endgroup',
