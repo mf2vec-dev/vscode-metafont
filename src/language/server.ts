@@ -61,74 +61,73 @@ connection.onDidChangeConfiguration((didChangeConfigurationParams) => {
 connection.onHover((hoverParams: HoverParams) => {
   const uri = hoverParams.textDocument.uri;
   const document = documentManager.documents.get(uri);
-  if (document !== undefined) {
-    let hoverPosition = hoverParams.position;
-    if (document.getText()[document.offsetAt(hoverPosition)] === '\n') {
-      // no hover for invisible newline / after last character
-      return;
-    }
-    // getWordRangeAtPosition gets previous word for first character of next word
-    hoverPosition.character += 1;
-    const hoverOffset = document.offsetAt(hoverPosition);
-    const documentData = documentManager.documentData.get(uri);
-    if (!documentData) {
-      return;
-    }
-    const tokenIdx = documentData.tokens.findIndex((token) => token[0] <= hoverOffset && hoverOffset <= token[0] + token[1]);
-    const tokenData = documentData.tokens[tokenIdx];
-    if (!tokenData || (tokenData[3] && TokenFlag.ignore) === TokenFlag.ignore) {
-      return;
-    }
-    const tokenLine = hoverPosition.line;
-    const tokenStartChar = document.positionAt(tokenData[0]).character;
-    const tokenRange: Range = {
-      start: {
-        character: tokenStartChar,
-        line: tokenLine
-      },
-      end: {
-        character: tokenStartChar + tokenData[1],
-        line: tokenLine
-      }
-    };
-    // just show the hovered text
-    // todo show type (macro, numeric, boolean, string, etc.)
-    let tokenText = document.getText().substring(tokenData[0], tokenData[0] + tokenData[1]);
-    let hoverText: string;
-    let additionalInformation = '';
-    if (tokenText[0] === '"') {
-      // string token
-      hoverText = 'string ' + tokenText;
-    } else if (numericTokenPattern.test(tokenText)) {
-      // numeric token
-      hoverText = 'numeric ' + tokenText;
-      additionalInformation += addNumericAdditionalInformation(tokenText);
-    } else { // symbolic token
-      const semanticHover = documentData.semanticHovers.get(tokenIdx);
-      if (semanticHover) {
-        hoverText = semanticHover;
-      } else {
-        hoverText = tokenText;
-      }
-    }
-    const hoverContent: MarkupContent = {
-      kind: MarkupKind.Markdown,
-      value: [
-        '```metafont',
-        hoverText,
-        '```'
-      ].join('\n')
-    };
-    if (additionalInformation) {
-      hoverContent.value += '\n' + additionalInformation;
-    }
-
-    const hover: Hover = {
-      contents: hoverContent,
-      range: tokenRange
-    };
-    return hover;
+  if (document === undefined) {
+    return;
   }
+  let hoverPosition = hoverParams.position;
+  if (document.getText()[document.offsetAt(hoverPosition)] === '\n') {
+    // no hover for invisible newline / after last character
+    return;
+  }
+  // getWordRangeAtPosition gets previous word for first character of next word
+  hoverPosition.character += 1;
+  const hoverOffset = document.offsetAt(hoverPosition);
+  const documentData = documentManager.documentData.get(uri);
+  if (!documentData) {
+    return;
+  }
+  const tokenIdx = documentData.tokens.findIndex((token) => token[0] <= hoverOffset && hoverOffset <= token[0] + token[1]);
+  const tokenData = documentData.tokens[tokenIdx];
+  if (!tokenData || (tokenData[3] && TokenFlag.ignore) === TokenFlag.ignore) {
+    return;
+  }
+  const tokenLine = hoverPosition.line;
+  const tokenStartChar = document.positionAt(tokenData[0]).character;
+  const tokenRange: Range = {
+    start: {
+      character: tokenStartChar,
+      line: tokenLine
+    },
+    end: {
+      character: tokenStartChar + tokenData[1],
+      line: tokenLine
+    }
+  };
+  let tokenText = document.getText().substring(tokenData[0], tokenData[0] + tokenData[1]);
+  let hoverText: string;
+  let additionalInformation = '';
+  if (tokenText[0] === '"') {
+    // string token
+    hoverText = 'string ' + tokenText;
+  } else if (numericTokenPattern.test(tokenText)) {
+    // numeric token
+    hoverText = 'numeric ' + tokenText;
+    additionalInformation += addNumericAdditionalInformation(tokenText);
+  } else { // symbolic token
+    const semanticHover = documentData.semanticHovers.get(tokenIdx);
+    if (semanticHover) {
+      hoverText = semanticHover;
+    } else {
+      hoverText = tokenText;
+    }
+  }
+  const hoverContent: MarkupContent = {
+    kind: MarkupKind.Markdown,
+    value: [
+      '```metafont',
+      hoverText,
+      '```'
+    ].join('\n')
+  };
+  if (additionalInformation) {
+    hoverContent.value += '\n' + additionalInformation;
+  }
+
+  const hover: Hover = {
+    contents: hoverContent,
+    range: tokenRange
+  };
+  return hover;
 });
 connection.languages.semanticTokens.on((semanticTokensParams: SemanticTokensParams) => {
   const uri = semanticTokensParams.textDocument.uri;
@@ -369,29 +368,30 @@ function getInputLinkLocations(document: TextDocument, documentData: DocumentDat
     && link.range.start.character <= position.character
     && position.character <= link.range.end.character
   );
-  if (link !== undefined) {
-    // If Location instead of LocationLink is provided, the characters underlined while pressing Ctrl (highlight for Ctrl+Click) are determined by vscode.LanguageConfiguration's wordPattern.
-    const locationLink: LocationLink = {
-      originSelectionRange: link.range,
-      targetUri: link.inputUri,
-      targetRange: {
-        start: {
-          line: 0,
-          character: 0
-        },
-        end: {
-          line: 0,
-          character: 0
-        }
-      },
-      targetSelectionRange: {
-        start: {
-          line: 0,
-          character: 0
-        },
-        end: document.positionAt(document.getText().length)
-      }
-    };
-    return [ locationLink ];
+  if (link === undefined) {
+    return;
   }
+  // If Location instead of LocationLink is provided, the characters underlined while pressing Ctrl (highlight for Ctrl+Click) are determined by vscode.LanguageConfiguration's wordPattern.
+  const locationLink: LocationLink = {
+    originSelectionRange: link.range,
+    targetUri: link.inputUri,
+    targetRange: {
+      start: {
+        line: 0,
+        character: 0
+      },
+      end: {
+        line: 0,
+        character: 0
+      }
+    },
+    targetSelectionRange: {
+      start: {
+        line: 0,
+        character: 0
+      },
+      end: document.positionAt(document.getText().length)
+    }
+  };
+  return [ locationLink ];
 }
