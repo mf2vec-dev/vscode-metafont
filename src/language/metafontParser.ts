@@ -61,7 +61,29 @@ export type IdentifierInfo = {
   replacement?: TokenRef;
 };
 
-const keywordPattern = joinRegexes([
+const keywordCommandPattern = joinRegexes([
+  '^(?:',
+  'save',
+  '|interim',
+  // newinternal in storageTypePattern
+  '|randomseed',
+  '|let',
+  '|delimiters',
+  '|outer|inner', // protection command
+  '|everyjob',
+  '|show(?:variable|tokens|dependencies|stats)?', // show command
+  '|message|err(?:message|help)', // message command
+  '|(?:batch|nonstop|scroll|errorstop)mode', // mode command
+  '|addto|cull', // picture command
+  '|display|inwindow', // display command
+  '|openwindow', // openwindow command
+  '|shipout',
+  '|special|numspecial',
+  '|ligtable|::|\|\|:', // ligtable // no colon here
+  ')$'
+]);
+
+const keywordControlPattern = joinRegexes([
   '^(?:',
   /if|else(?:if)?|fi/,
   /|for(?:suffixes|ever)?|step|until|exitif|endfor/,
@@ -69,6 +91,18 @@ const keywordPattern = joinRegexes([
   /|end|dump/,
   /|input|endinput/,
   /|scantokens|expandafter|quote/,
+  ')$'
+]);
+
+const keywordGroupingPattern = joinRegexes([
+  '^(?:',
+  'begingroup|endgroup',
+  ')$'
+]);
+
+const storageTypePattern = joinRegexes([
+  '^(?:',
+  'boolean|string|path|pen|picture|transform|pair|numeric|newinternal',
   ')$'
 ]);
 
@@ -313,9 +347,18 @@ export class MetafontParser {
           if (identifiers.get(rightHandTokenStr)!.completionItemKind !== undefined) {
             identifierInfo.completionItemKind = identifiers.get(rightHandTokenStr)!.completionItemKind;
           }
-        } else if (keywordPattern.test(rightHandReplacedTokenStr)) {
-          identifierInfo.tokenType = TokenType.keyword;
+        } else if (keywordCommandPattern.test(rightHandReplacedTokenStr)) {
+          identifierInfo.tokenType = TokenType.keywordCommand;
           identifierInfo.completionItemKind = CompletionItemKind.Keyword;
+        } else if (keywordControlPattern.test(rightHandReplacedTokenStr)) {
+          identifierInfo.tokenType = TokenType.keywordControl;
+          identifierInfo.completionItemKind = CompletionItemKind.Keyword;
+        } else if (keywordGroupingPattern.test(rightHandReplacedTokenStr)) {
+          identifierInfo.tokenType = TokenType.keywordGrouping;
+          identifierInfo.completionItemKind = CompletionItemKind.Keyword;
+        } else if (storageTypePattern.test(rightHandReplacedTokenStr)) {
+          identifierInfo.tokenType = TokenType.storageType;
+          identifierInfo.completionItemKind = CompletionItemKind.Keyword; // this seems to be the best CompletionItemKind
         }
         identifiers.set(leftHandTokenStr, identifierInfo);
 

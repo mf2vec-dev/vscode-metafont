@@ -59,6 +59,17 @@
         "path": "./out/language/metafont.tmLanguage.json"
       }
     ],
+    "semanticTokenScopes":[
+      {
+        "language": "metafont",
+        "scopes": {
+          "keyword_control": ["keyword.control"],
+          "keyword_command": ["keyword.other.command"],
+          "keyword_grouping": ["keyword.other.grouping"],
+          "storage_type": ["storage.type"]
+        }
+      }
+    ],
     "commands": [
       {
         "command": "vscode-metafont.select-base",

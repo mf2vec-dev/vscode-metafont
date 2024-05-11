@@ -27,11 +27,18 @@ export enum TokenFlag {
   forbiddenEndInLoop = 1 << tokenFlagI++,
   endInCondition = 1 << tokenFlagI++
 }
+
+// keyword.command doesn't work (while contributing `"keyword.command": ["keyword.other.command"]` in `"semanticTokenScopes"`).
+// It seems that VSCode's (undocumented) predefined TextMate semantic token scope mapping 'keyword' -> 'keyword.control' overrides it.
+// Therefore, use `_` instead of `.`.
 export enum TokenType {
   function = 'function',
   parameter = 'parameter',
   operator = 'operator',
-  keyword = 'keyword',
+  keywordControl = 'keyword_control',
+  keywordCommand = 'keyword_command',
+  keywordGrouping = 'keyword_grouping',
+  storageType = 'storage_type',
   string = 'string',
 };
 
