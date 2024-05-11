@@ -68,7 +68,7 @@ const keywordPattern = joinRegexes([
   /|(?:var|primary|secondary|tertiary|end)?def/,
   /|end|dump/,
   /|input|endinput/,
-  /|scantokens|expandafter/,
+  /|scantokens|expandafter|quote/,
   ')$'
 ]);
 

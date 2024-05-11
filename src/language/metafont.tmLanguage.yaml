@@ -575,6 +575,12 @@ patterns:
       'expandafter',
       *letterTokenRb
     ]
+  - name: keyword.control.quote.metafont
+    match: !join [
+      *letterTokenLb,
+      'quote',
+      *letterTokenRb
+    ]
   # macro definitions
   - name: meta.def.metafont
     match: !join [
