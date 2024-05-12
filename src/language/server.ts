@@ -12,13 +12,17 @@ import {
   LocationLink,
   MarkupContent,
   MarkupKind,
+  ParameterInformation,
   Range,
   SemanticTokens,
   SemanticTokensBuilder,
   SemanticTokensParams,
+  SignatureHelp,
+  SignatureHelpParams,
+  SignatureInformation,
   createConnection
 } from 'vscode-languageserver/node';
-import { DocumentData, MetafontDocumentManager, TokenFlag, TokenType } from './metafontDocumentManager';
+import { DocumentData, MetafontDocumentManager, SigHelp, TokenFlag, TokenType } from './metafontDocumentManager';
 import { numericTokenPattern } from './regexes';
 import * as sparks from './sparks.json';
 
@@ -41,6 +45,10 @@ connection.onInitialize((_initializeParams: InitializeParams) => {
           tokenModifiers: ['']
         },
         full: true
+      },
+      signatureHelpProvider: {
+        triggerCharacters: ['.', ' ', '\t', '('],
+        retriggerCharacters: [',']
       }
     },
     serverInfo: {
@@ -244,6 +252,71 @@ connection.onCompletion((completionParams: CompletionParams) => {
   }
   return completionItems;
 });
+
+connection.onSignatureHelp((signatureHelpParams: SignatureHelpParams) => {
+  const uri = signatureHelpParams.textDocument.uri;
+  const document = documentManager.documents.get(uri);
+  if (document === undefined) {
+    return;
+  }
+  let signatureHelpPosition = signatureHelpParams.position;
+  const hoverOffset = document.offsetAt(signatureHelpPosition);
+  const documentData = documentManager.documentData.get(uri);
+  if (documentData === undefined) {
+    return;
+  }
+  const tokenIdx = documentData.tokens.findIndex((token) => token[0] <= hoverOffset && hoverOffset <= token[0] + token[1]);
+  const tokenData = documentData.tokens[tokenIdx];
+  if (!tokenData || (tokenData[3] && TokenFlag.ignore) === TokenFlag.ignore) {
+    return;
+  }
+
+  const signatureHelp = documentData.signatureHelps.get(tokenIdx);
+  if (signatureHelp === undefined) {
+    return;
+  }
+
+  let mainSigHelp: SigHelp;
+  let activeParam: number | undefined;
+  let emptyParameterInfo = false;
+  if (signatureHelp.isParam) {
+    const mainSigHelp_ = documentData.signatureHelps.get(signatureHelp.mainTokenIdx);
+    if (mainSigHelp_ === undefined || mainSigHelp_.isParam) {
+      return;
+    }
+    mainSigHelp = mainSigHelp_;
+    activeParam = signatureHelp.param;
+  } else {
+    // SignatureHelp with cursor at macro name
+    mainSigHelp = signatureHelp;
+    // No parameter should be highlighted.
+    // Setting SignatureHelp.activeParameter and SignatureInformation.activeParameter to undefined doesn't work since 0 is assumed.
+    // Parameters need to be omitted.
+    activeParam = undefined;
+    emptyParameterInfo = true;
+  }
+
+  const parameters: ParameterInformation[] = [];
+  if (!emptyParameterInfo) {
+    for (const param of mainSigHelp.parameters) {
+      parameters.push({
+        label: param.label
+      });
+    }
+  }
+  const signatures: SignatureInformation[] = [{
+    label: mainSigHelp.label,
+    activeParameter: activeParam,
+    parameters: parameters,
+  }];
+  const sigHelp: SignatureHelp = {
+    signatures: signatures,
+  };
+  return sigHelp;
+});
+
+
+// own requests
 
 export type MfInputsRequestArgs = { uri: string };
 export type MfInputsRequestInput = { uri: string };

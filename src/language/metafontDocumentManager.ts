@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { TextDocument } from 'vscode-languageserver-textdocument';
-import { Connection, Declaration, Definition, Diagnostic, DiagnosticSeverity, DiagnosticTag, Position, Range, TextDocuments, URI, WorkDoneProgressServerReporter } from 'vscode-languageserver/node';
+import { Connection, Declaration, Definition, Diagnostic, DiagnosticSeverity, DiagnosticTag, Position, Range, TextDocuments, URI, WorkDoneProgressServerReporter, uinteger } from 'vscode-languageserver/node';
 import { IdentifierInfo, MetafontParser } from './metafontParser';
 import { joinRegexes, nonAsciiCharPattern, numericTokenPattern, symbolicTokenPattern } from './regexes';
 
@@ -25,7 +25,10 @@ export enum TokenFlag {
   missingNext = 1 << tokenFlagI++,
   confused = 1 << tokenFlagI++,
   forbiddenEndInLoop = 1 << tokenFlagI++,
-  endInCondition = 1 << tokenFlagI++
+  endInCondition = 1 << tokenFlagI++,
+  tooFewDelimitedParameters = 1 << tokenFlagI++,
+  tooManyDelimitedParameters = 1 << tokenFlagI++,
+  undelimitedSuffixParameterWithIs = 1 << tokenFlagI++,
 }
 
 // keyword.command doesn't work (while contributing `"keyword.command": ["keyword.other.command"]` in `"semanticTokenScopes"`).
@@ -47,6 +50,20 @@ export type SemanticToken = {
   tokenType?: TokenType;
   tokenModifiers?: [];
 };
+export type SigHelpParam = {
+  label: [uinteger, uinteger];
+  isDelimited: boolean;
+  paramType: string;
+};
+export type SigHelp = {
+  isParam: false;
+  label: string;
+  parameters: SigHelpParam[];
+} | {
+  isParam: true;
+  mainTokenIdx: number; // token index where signature (isParam: false) is stored
+  param: number;
+};
 export interface Input {
   range: Range;
   inputUri: URI;
@@ -59,6 +76,7 @@ export interface DocumentData {
   semanticTokens: Map<number, SemanticToken>;
   declarations: Map<number, Declaration>;
   definitions: Map<number, Definition>;
+  signatureHelps: Map<number, SigHelp>;
   inputs: Input[];
   identifiersAtEnd: Map<string, IdentifierInfo>;
 };
@@ -112,6 +130,7 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
       semanticTokens: new Map<number, SemanticToken>(),
       declarations: new Map<number, Declaration>(),
       definitions: new Map<number, Definition>(),
+      signatureHelps: new Map<number, SigHelp>(),
       inputs: [],
       identifiersAtEnd: new Map<string, IdentifierInfo>()
     });
@@ -239,6 +258,15 @@ export class MetafontDocumentManager extends TextDocuments<TextDocument> {
         }
         if ((tokenData[3] & TokenFlag.forbiddenEndInLoop) === TokenFlag.forbiddenEndInLoop) {
           diagnostics.push(this.createDiagnostic('end is forbidden in a loop. METAFONT will complain: \'! Forbidden token found while scanning the text of a for/forsuffixes/forever loop.\'', textDocument, tokenData, DiagnosticSeverity.Error));
+        }
+        if ((tokenData[3] & TokenFlag.tooFewDelimitedParameters) === TokenFlag.tooFewDelimitedParameters) {
+          diagnostics.push(this.createDiagnostic('too few delimited parameters', textDocument, tokenData, DiagnosticSeverity.Error));
+        }
+        if ((tokenData[3] & TokenFlag.tooManyDelimitedParameters) === TokenFlag.tooManyDelimitedParameters) {
+          diagnostics.push(this.createDiagnostic('too many delimited parameters', textDocument, tokenData, DiagnosticSeverity.Error));
+        }
+        if ((tokenData[3] & TokenFlag.undelimitedSuffixParameterWithIs) === TokenFlag.undelimitedSuffixParameterWithIs) {
+          diagnostics.push(this.createDiagnostic('METAFONT doesn\'t allow `= <suffix>\' or `:= <suffix>\' in case of undelimited suffix parameter', textDocument, tokenData, DiagnosticSeverity.Error));
         }
       }
       this.connection.sendDiagnostics({

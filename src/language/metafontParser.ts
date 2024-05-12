@@ -6,7 +6,7 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { TextDocument } from 'vscode-languageserver-textdocument';
 import { CompletionItemKind, Declaration, Definition } from 'vscode-languageserver/node';
-import { Input, MetafontDocumentManager, SemanticToken, TokenData, TokenFlag, TokenType } from './metafontDocumentManager';
+import { Input, MetafontDocumentManager, SemanticToken, SigHelp, SigHelpParam, TokenData, TokenFlag, TokenType } from './metafontDocumentManager';
 import { joinRegexes } from './regexes';
 import * as sparks from './sparks.json';
 
@@ -56,6 +56,7 @@ export type IdentifierInfo = {
   declarationTokens: TokenRef[];
   definitionTokens: TokenRef[];
   hover: string;
+  signatureHelp?: SigHelp;
   tokenType?: TokenType;
   completionItemKind?: CompletionItemKind;
   replacement?: TokenRef;
@@ -122,6 +123,7 @@ export class MetafontParser {
     const semanticTokens = documentData.semanticTokens;
     const declarations = documentData.declarations;
     const definitions = documentData.definitions;
+    const signatureHelps = documentData.signatureHelps;
     const inputs = documentData.inputs;
 
     let identifiers = new Map<string, IdentifierInfo>();
@@ -146,10 +148,12 @@ export class MetafontParser {
 
       const replacedTokenStr = this.replaceTokenStr(identifiers, origTokenStr);
 
-      this.applyParserResults(i, origTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens);
+      this.applyParserResults(i, origTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens, signatureHelps);
       let hoverStr: string;
+      let sigLabel: string;
+      let params: SigHelpParam[];
 
-      switch (replacedTokenStr) {
+      replacedTokenSwitch: switch (replacedTokenStr) {
       case 'if':
         nestingStructure.push({
           kind: NestingBlockKind.condition,
@@ -365,8 +369,8 @@ export class MetafontParser {
         if (['(', ')'].includes(rightHandTokenStr)) { // [The METAFONTbook, p 218]
           tokens[i + 3][3] |= TokenFlag.letRightHandSideDelimiterP218;
         }
-        this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens); // left hand
-        this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens); // right hand
+        this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens, signatureHelps); // left hand
+        this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens, signatureHelps); // right hand
         i += 4;
         break;
       case 'def':
@@ -402,12 +406,16 @@ export class MetafontParser {
         }
         // todo add defSymbolicTokenStr to identifiers within the definition (recursive expansion)
         hoverStr = `${replacedTokenStr} ${declaredVariableStr}`;
+        sigLabel = `${replacedTokenStr} ${declaredVariableStr}`;
+        params = [];
         this.handleNotReachable(parseMode, tokens, i);
         let nextTokenStr = this.getTokenStr(textDocument, i);
         i++;
         this.handleNotReachable(parseMode, tokens, i);
         if (nextTokenStr === '@#') {
           hoverStr += '@#';
+          sigLabel += '@#';
+          params.push({label: [sigLabel.length-2, sigLabel.length], isDelimited: false, paramType: '@#'});
           // todo add @# to identifiers within the definition
           this.handleNotReachable(parseMode, tokens, i);
           nextTokenStr = this.getTokenStr(textDocument, i);
@@ -422,21 +430,30 @@ export class MetafontParser {
           // i should be first token after (
           // parse delimited arg
           this.handleNotReachable(parseMode, tokens, i);
+          let parameterType: string;
           const parameterTypeTokenStr = this.getTokenStr(textDocument, i);
           if (lastParameterTypeTokenStr === undefined) {
             hoverStr += `(${parameterTypeTokenStr} `;
+            sigLabel += `(${parameterTypeTokenStr} `;
+            parameterType = parameterTypeTokenStr!;
           } else if (lastParameterTypeTokenStr !== parameterTypeTokenStr) {
             // not the first delimited parameter
             hoverStr += `)(${parameterTypeTokenStr} `;
+            sigLabel += `)(${parameterTypeTokenStr} `;
+            parameterType = parameterTypeTokenStr!;
           } else {
             // delimited parameter with same parameter type
             hoverStr += `,`; // todo maybe don't do this
+            sigLabel += `,`; // todo maybe don't do this
+            parameterType = parameterType!; // it's known, reuse it
           }
           i++; // continue with parameter token
           while (nextTokenStr !== ')') {
             this.handleNotReachable(parseMode, tokens, i);
             const parameterTokenStr = this.getTokenStr(textDocument, i);
             hoverStr += parameterTokenStr;
+            sigLabel += parameterTokenStr;
+            params.push({label: [sigLabel.length-parameterTokenStr!.length, sigLabel.length], isDelimited: true, paramType: parameterType});
             i++; // go to token after parameter: , or )
             this.handleNotReachable(parseMode, tokens, i);
             nextTokenStr = this.getTokenStr(textDocument, i); // should be , or )
@@ -444,6 +461,7 @@ export class MetafontParser {
               break; // something is strange here
             } else if (nextTokenStr === ',') {
               hoverStr += ',';
+              sigLabel += ',';
             } // else it's ), increase i and break loop with while condition
             i++; // continue after , or )
           }
@@ -456,6 +474,7 @@ export class MetafontParser {
         if (lastParameterTypeTokenStr !== undefined) {
           // there were delimited parameters
           hoverStr += `)`;
+          sigLabel += `)`;
         }
         if (nextTokenStr === undefined) {
           break;
@@ -463,10 +482,14 @@ export class MetafontParser {
         if (['primary', 'secondary', 'tertiary', 'expr', 'suffix', 'text'].includes(nextTokenStr)) {
           this.handleNotReachable(parseMode, tokens, i);
           if (lastParameterTypeTokenStr === undefined) { // delimited parameters
-            hoverStr += ' '; // space between declared variable and undelimited parameter type
+            // space between declared variable and undelimited parameter type
+            hoverStr += ' ';
+            sigLabel += ' ';
           }
           let parameterToken  = this.getTokenStr(textDocument, i);
           hoverStr += `${nextTokenStr} ${parameterToken}`;
+          sigLabel += `${nextTokenStr} ${parameterToken}`;
+          params.push({label: [sigLabel.length-parameterToken!.length, sigLabel.length], isDelimited: false, paramType: nextTokenStr});
           i++; // continue after parameter token (of = :=)
           if (nextTokenStr === 'expr') {
             this.handleNotReachable(parseMode, tokens, i);
@@ -477,6 +500,8 @@ export class MetafontParser {
               parameterToken  = this.getTokenStr(textDocument, i);
               i++;
               hoverStr += ` of ${parameterToken}`;
+              sigLabel += ` of ${parameterToken}`;
+              params.push({label: [sigLabel.length-parameterToken!.length, sigLabel.length], isDelimited: false, paramType: 'of'});
             }
           }
           this.handleNotReachable(parseMode, tokens, i);
@@ -490,6 +515,11 @@ export class MetafontParser {
           declarationTokens: [{ filePath: textDocument.uri, idx: declaredVariableI }],
           definitionTokens: [{ filePath: textDocument.uri, idx: declaredVariableI }],
           hover: hoverStr,
+          signatureHelp: {
+            isParam: false,
+            label: sigLabel,
+            parameters: params
+          },
           tokenType: TokenType.function,
           completionItemKind: CompletionItemKind.Function
         });
@@ -596,6 +626,179 @@ export class MetafontParser {
           identifiers = new Map<string, IdentifierInfo>([...identifiers, ...inputDocumentData.identifiersAtEnd]);
         }
         break;
+      default:
+        const mainIdentifierInfo = identifiers.get(replacedTokenStr);
+        if (mainIdentifierInfo === undefined) {
+          break;
+        }
+        if (mainIdentifierInfo.tokenType === TokenType.function) {
+          if (mainIdentifierInfo.signatureHelp === undefined || mainIdentifierInfo.signatureHelp.isParam) {
+            break;
+          }
+
+          // TODO macro names with multiple tokens (vardef)
+          const mainTokenIdx = i;
+          i++; // go to next token after macro name
+          let p = 0;
+          params = mainIdentifierInfo.signatureHelp.parameters;
+          let nextTokenStr: string | undefined;
+
+          // @#
+          if (params[p].paramType === '@#') {
+            for (; i < tokens.length; i++) {
+              nextTokenStr = this.getTokenStr(textDocument, i);
+              if (nextTokenStr === undefined) {
+                break outerTokenLoop;
+              }
+              // TODO replacement (let)
+              if (nextTokenStr === '(' || sparks.primitives.includes(nextTokenStr)) {
+                break; // end of suffix
+              }
+              signatureHelps.set(i, {
+                isParam: true,
+                mainTokenIdx: mainTokenIdx,
+                param: p
+              });
+            }
+            p++;
+          }
+
+          // delimited parameters
+          nextTokenStr = this.getTokenStr(textDocument, i);
+          if (nextTokenStr === undefined) {
+            break outerTokenLoop;
+          }
+          let inDelimiters = false;
+          let delimiterDepth = 0; // TODO different delimiters, matching pairs of different delimiters
+          while (i < tokens.length && p < params.length && params[p].isDelimited) {
+            if (!inDelimiters) {
+              if (nextTokenStr === '(') {
+                delimiterDepth++;
+                signatureHelps.set(i, {
+                  isParam: true,
+                  mainTokenIdx: mainTokenIdx,
+                  param: p
+                });
+                inDelimiters = true;
+              } else { // nextTokenStr !== '('
+                tokens[i][3] |= TokenFlag.tooFewDelimitedParameters;
+                break replacedTokenSwitch;
+              }
+            } else { // inDelimiters
+              if (nextTokenStr === '(') {
+                delimiterDepth++;
+              } else if (nextTokenStr === ')') {
+                delimiterDepth--;
+                if (delimiterDepth === 0){
+                  p++;
+                  inDelimiters = false;
+                }
+              } else if (nextTokenStr === ',' && params[p].paramType !== 'text') {
+                // delimited text only ends with )
+                // , is allowed in text argument
+                // [The METAFONTbook, p. 166, 249]
+                p++;
+              } // else token i is part of the delimited argument
+              signatureHelps.set(i, {
+                isParam: true,
+                mainTokenIdx: mainTokenIdx,
+                param: p
+              });
+            }
+            i++; // next token
+            nextTokenStr = this.getTokenStr(textDocument, i);
+            if (nextTokenStr === undefined) {
+              break outerTokenLoop;
+            }
+          }
+          if ((p >= params.length || !params[p].isDelimited) && inDelimiters) {
+            tokens[i][3] |= TokenFlag.tooManyDelimitedParameters;
+          }
+
+          // undelimited parameters
+          if (p >= params.length) {
+            // end of parameters, no undelimited parameters
+            break;
+          }
+          nextTokenStr = this.getTokenStr(textDocument, i);
+          if (nextTokenStr === undefined) {
+            break outerTokenLoop;
+          }
+          if (['=', ':='].includes(nextTokenStr)) {
+            if (['primary', 'secondary', 'tertiary', 'expr'].includes(params[p].paramType)) {
+              signatureHelps.set(i, {
+                isParam: true,
+                mainTokenIdx: mainTokenIdx,
+                param: p
+              });
+              i++;
+              nextTokenStr = this.getTokenStr(textDocument, i);
+              if (nextTokenStr === undefined) {
+                break outerTokenLoop;
+              }
+            } else if (params[p].paramType === 'suffix') {
+              tokens[i][3] |= TokenFlag.undelimitedSuffixParameterWithIs;
+            }
+          }
+          // METAFONT allows (<suffix>) as undelimited parameter
+          inDelimiters = false;
+          if (params[p].paramType === 'suffix' && nextTokenStr === '(') {
+            inDelimiters = true;
+            signatureHelps.set(i, {
+              isParam: true,
+              mainTokenIdx: mainTokenIdx,
+              param: p
+            });
+            i++;
+            nextTokenStr = this.getTokenStr(textDocument, i);
+            if (nextTokenStr === undefined) {
+              break outerTokenLoop;
+            }
+          }
+          let groupDepth = 0;
+          while (i < tokens.length) {
+            let breakAfterThis = false;
+            if (nextTokenStr === ';') {
+              // end of undelimited argument
+              break replacedTokenSwitch;
+            } else if (nextTokenStr === 'begingroup') {
+              groupDepth++;
+            } else if (nextTokenStr === 'endgroup') {
+              if (groupDepth === 0) {
+                // end of undelimited parameter
+                break replacedTokenSwitch;
+              } else {
+                groupDepth--;
+              }
+            } else if (nextTokenStr === 'end') {
+              // end of undelimited parameter
+              break replacedTokenSwitch;
+            } else if (params[p].paramType === 'expr' && nextTokenStr === 'of') {
+              if (p+1 < params.length && params[p+1].paramType === 'of') {
+                p++;
+              }
+            } else if (params[p].paramType !== 'text' && sparks.primitives.includes(nextTokenStr)) {
+              // text is the only parameter type that can include sparks
+              // otherwise: end of undelimited parameter
+              break replacedTokenSwitch;
+            } else if (inDelimiters && nextTokenStr === ')') {
+              breakAfterThis = true;
+            }
+            signatureHelps.set(i, {
+              isParam: true,
+              mainTokenIdx: mainTokenIdx,
+              param: p
+            });
+            i++;
+            nextTokenStr = this.getTokenStr(textDocument, i);
+            if (nextTokenStr === undefined) {
+              break outerTokenLoop;
+            }
+            if (breakAfterThis) {
+              break replacedTokenSwitch;
+            }
+          }
+        }
       }
     }
 
@@ -749,11 +952,12 @@ export class MetafontParser {
     return parseMode;
   }
 
-  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>) {
+  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>, SignatureHelps: Map<number, SigHelp>) {
     this.addSemanticInfo(i, origTokenStr, identifiers, semanticHovers);
     this.addTokenLocationLinks(i, origTokenStr, identifiers, declarations, "declarationTokens");
     this.addTokenLocationLinks(i, origTokenStr, identifiers, definitions, "definitionTokens");
     this.addSemanticToken(i, origTokenStr, identifiers, semanticTokens);
+    this.addSignatureHelp(i, origTokenStr, identifiers, SignatureHelps);
   }
 
   private replaceTokenStr(identifiers: Map<string, IdentifierInfo>, replacedTokenStr: string) {
@@ -814,6 +1018,13 @@ export class MetafontParser {
       };
       semanticTokens.set(i, semanticToken);
     }
+  }
+  private addSignatureHelp(i: number, tokenStr: string, identifiers: Map<string, IdentifierInfo>, signatureHelps: Map<number, SigHelp>, ) {
+    const identifierInfo = identifiers.get(tokenStr);
+    if (identifierInfo?.signatureHelp === undefined) {
+      return;
+    }
+    signatureHelps.set(i, identifierInfo.signatureHelp);
   }
 
   getTokenStr(textDocument: TextDocument, tokenIdx: number) {
