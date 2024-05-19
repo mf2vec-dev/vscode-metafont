@@ -952,12 +952,12 @@ export class MetafontParser {
     return parseMode;
   }
 
-  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>, SignatureHelps: Map<number, SigHelp>) {
+  private applyParserResults(i: number, origTokenStr: string, identifiers: Map<string, IdentifierInfo>, semanticHovers: Map<number, string>, declarations: Map<number, Declaration>, definitions: Map<number, Definition>, semanticTokens: Map<number, SemanticToken>, signatureHelps: Map<number, SigHelp>) {
     this.addSemanticInfo(i, origTokenStr, identifiers, semanticHovers);
     this.addTokenLocationLinks(i, origTokenStr, identifiers, declarations, "declarationTokens");
     this.addTokenLocationLinks(i, origTokenStr, identifiers, definitions, "definitionTokens");
     this.addSemanticToken(i, origTokenStr, identifiers, semanticTokens);
-    this.addSignatureHelp(i, origTokenStr, identifiers, SignatureHelps);
+    this.addSignatureHelp(i, origTokenStr, identifiers, signatureHelps);
   }
 
   private replaceTokenStr(identifiers: Map<string, IdentifierInfo>, replacedTokenStr: string) {

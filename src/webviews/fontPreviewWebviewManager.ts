@@ -205,7 +205,7 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
           let previewPath = mfPath2PreviewPathData(logCmd);
           rawCharPreviewItems.push({ line: logCmd.line, filePath: logCmd.filePath, type: 'Bezier', data: previewPath, xoffset: 0, yoffset: 0, xGlyphPos: 0, yGlyphPos: 0 });
         } else if (types.isMfLabel(logCmd)) {
-          rawCharPreviewItems.push({ line: logCmd.line, filePath: logCmd.filePath, type: 'Label', data: { mid: [logCmd.x, logCmd.y], text: logCmd.text , pos: logCmd.pos }, xoffset: 0, yoffset: 0, xGlyphPos: 0, yGlyphPos: 0 });
+          rawCharPreviewItems.push({ line: logCmd.line, filePath: logCmd.filePath, type: 'Label', data: { mid: [logCmd.x, logCmd.y], text: logCmd.text, pos: logCmd.pos }, xoffset: 0, yoffset: 0, xGlyphPos: 0, yGlyphPos: 0 });
         } else if (types.isMfShipout(logCmd)) {
           let picture: types.PreviewPicture | undefined;
           if (logCmd.picture !== undefined) {

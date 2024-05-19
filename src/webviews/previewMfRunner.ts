@@ -147,7 +147,7 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
     let pathStr: string | null;
     if (pathTraceMatch) {
       line = parseInt(pathTraceMatch[1], 10);
-      pathStr = pathTraceMatch[2].replace(/\s/g,'');
+      pathStr = pathTraceMatch[2].replace(/\s/g, '');
     } else {
       line = 0;
       pathStr = null;
@@ -259,7 +259,7 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
               return k;
             })
           );
-        } else if (['=:', 'p=:' , 'p=:g', '=:p', '=:pg', 'p=:p', 'p=:pg', 'p=:pgg'].includes(cmdName)) {
+        } else if (['=:', 'p=:', 'p=:g', '=:p', '=:pg', 'p=:p', 'p=:pg', 'p=:pgg'].includes(cmdName)) {
           const ligType = cmdName.replace('p', '|').replace('g', '>');
           const ligChar = toCharCode(cmdBody);
           const char2 = toCharCode(lastCmdBody);
@@ -298,7 +298,7 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
 }
 
 export function parsePathString(pathStr: string, line: number, curFilePath: string): types.MfPathData | undefined {
-  pathStr = pathStr.replace(/\s/g,'');
+  pathStr = pathStr.replace(/\s/g, '');
   const pathMatch = pathStr.match(/\((-?[\d\.]+),(-?[\d\.]+)\)((?:\.\.controls\(.*?\)and\(.*?\)\.\.\(.*?\))+)(?:..controls\((-?[-\d\.]+),(-?[-\d\.]+)\)and\((-?[\d\.]+),(-?[\d\.]+)\)\.\.cycle)?/);
   if (pathMatch) {
     const moveTo: [number, number] = [parseFloat(pathMatch[1]), parseFloat(pathMatch[2])];
