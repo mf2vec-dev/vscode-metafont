@@ -1,6 +1,33 @@
 # Changelog
 
 
+## 0.3.0 - 2024-05-19
+
+### Added
+
+- Add walkthrough to README.
+- Add signature help support.
+- Add support for input files outside workspace, using `kpsewhich` to find them.
+- Add basic testing support.
+- Add `step`, `until`, `begingroup`, `endgroup` and `quote` to rules of syntax and semantic highlighting.
+- Add semantic highlighting for commands and types.
+- Add semantic token scopes to `package.json`.
+
+### Changed
+
+- Improve rules for identifying macros in `metafont.tmLanguage.yaml`.
+- Improve pattern for indentation rules.
+- Set initial visibility of the debug expression preview view, glyph table view and glyph preview view to collapsed.
+- Add `comma-spacing` linting rule.
+- Small code improvements.
+
+### Fixed
+
+- Fix bug causing empty debug expression preview.
+- Fix rule for `$` in `metafont.tmLanguage.yaml`.
+- Fix colon rules of loops in ligtable commands.
+
+
 ## 0.2.0 - 2024-04-21
 
 ### Added
