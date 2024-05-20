@@ -641,6 +641,10 @@ export class MetafontParser {
           i++; // go to next token after macro name
           let p = 0;
           params = mainIdentifierInfo.signatureHelp.parameters;
+          let paramP = params[p];
+          if (paramP === undefined) {
+            break replacedTokenSwitch;
+          }
           let nextTokenStr: string | undefined;
 
           // @#
