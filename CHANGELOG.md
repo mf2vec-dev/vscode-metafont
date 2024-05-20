@@ -1,6 +1,19 @@
 # Changelog
 
 
+## 0.3.1 - 2024-05-20
+
+### Changed
+
+- Add TypeScript rule `noUncheckedIndexedAccess` to increase type safety and hopefully avoid crashes like the one fixed by this update.
+- Update the code to be in compliance with the new rule.
+- Minor code and typing improvements.
+
+### Fixed
+
+- Fix language server crash caused by `params` with length 0.
+
+
 ## 0.3.0 - 2024-05-19
 
 ### Added
