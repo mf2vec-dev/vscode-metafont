@@ -64,7 +64,7 @@ export async function activate(ctx: vscode.ExtensionContext) {
 
 function activateActiveFileWatchers(ctx: vscode.ExtensionContext) {
   function setActiveMfFile(textEditor?: vscode.TextEditor) {
-    if (textEditor && textEditor.document.languageId === 'metafont') {
+    if (textEditor && textEditor.document.languageId === 'metafont' && textEditor.selections[0] !== undefined) {
       activeMfFileAbsPath = textEditor.document.fileName;
       activeMfFileLineNumber = textEditor.selections[0].active.line + 1; // +1 for one-based line numbering
     }

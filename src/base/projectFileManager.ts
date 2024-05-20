@@ -15,7 +15,7 @@ export class ProjectFileManager {
 
   loadProjectFile() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders) {
+    if (workspaceFolders !== undefined && workspaceFolders[0] !== undefined) {
       const filePath = vscode.Uri.joinPath(workspaceFolders[0].uri, '.mf-project');
       let jsonStr: string;
       try {
@@ -47,7 +47,7 @@ export class ProjectFileManager {
       if (this.mfFileManager !== undefined && data.defaultJobPath !== undefined) {
         let relDefaultJobPath = data.defaultJobPath;
         const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders !== undefined) {
+        if (workspaceFolders !== undefined && workspaceFolders[0] !== undefined) {
           relDefaultJobPath = path.resolve(workspaceFolders[0].uri.path, relDefaultJobPath);
         }
         this.mfFileManager.setDefaultJobPath(relDefaultJobPath);
@@ -58,7 +58,7 @@ export class ProjectFileManager {
 
   updateProjectFile() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders !== undefined && this.mfFileManager !== undefined) {
+    if (workspaceFolders !== undefined && workspaceFolders[0] !== undefined && this.mfFileManager !== undefined) {
 
       // store only assigned categories in the project file
       // remove all unknown categories and files with only unknown category

@@ -131,6 +131,9 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
   );
 
   const logFileName = readdirSync(tmpDir).filter((fn) => fn.endsWith('.log'))[0];
+  if (logFileName === undefined) {
+    return [];
+  }
   const logContent = readFileSync(path.join(tmpDir, logFileName), 'utf-8');
 
   const logMatches = [...logContent.matchAll(/@mf2vec@(input|contour|doublepath|special|numspecial|shipout|ligtable|::?|kern|p?=:p?(?:gg?)?|skipto)\s(.*?)\n@mf2vec@/gms)];
@@ -139,13 +142,16 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
   let skiptos: {[key: number]: number[]} = {};
   for (let i = 0; i < logMatches.length; i++) {
     const logMatch = logMatches[i];
+    if (logMatch === undefined || logMatch[1] === undefined || logMatch[2] === undefined) {
+      continue;
+    }
     const cmdName = logMatch[1];
     let cmdBody = logMatch[2];
     let cmdBodyItems = cmdBody.split(/\n>> /); // split show commands // todo keep or remove >> for every item
-    const pathTraceMatch = cmdBodyItems[0].match(/>> Path at line (\d+):\n(.*?)\n$/s);
+    const pathTraceMatch = cmdBodyItems[0]?.match(/>> Path at line (\d+):\n(.*?)\n$/s);
     let line: number;
     let pathStr: string | null;
-    if (pathTraceMatch) {
+    if (pathTraceMatch && pathTraceMatch[1] &&  pathTraceMatch[2]) {
       line = parseInt(pathTraceMatch[1], 10);
       pathStr = pathTraceMatch[2].replace(/\s/g, '');
     } else {
@@ -154,7 +160,7 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
     }
     if (cmdName === 'input') {
       const filePathMatch = cmdBody.match(/^\((.*)\)?$/);
-      if (filePathMatch) {
+      if (filePathMatch && filePathMatch[1]) {
         curAbsFilePath = filePathMatch[1];
         if (workspacePath) {
           curAbsFilePath = path.resolve(workspacePath, curAbsFilePath);
@@ -170,8 +176,8 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
     } else if (cmdName === 'special') {
       // TODO rule ?
       let cmdInfo = cmdBodyItems[1];
-      cmdInfo = cmdInfo.slice(1, cmdInfo.length-1); // slice "s off
-      if (cmdInfo[0] === ' ' && ['0', '1', '2', '3', '4', '5', '6', '7', '8'].includes(cmdInfo[1])) {
+      cmdInfo = cmdInfo?.slice(1, cmdInfo.length-1); // slice "s off
+      if (cmdInfo !== undefined && cmdInfo[0] === ' ' && cmdInfo[1] !== undefined && ['0', '1', '2', '3', '4', '5', '6', '7', '8'].includes(cmdInfo[1])) {
         let posInt = parseInt(cmdInfo[1]);
         let dot;
         if (posInt > 4) {
@@ -199,9 +205,18 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
           pos = 'bot';
           break;
         }
-        if (logMatches[i+1][1] === 'numspecial' && logMatches[i+2][1] === 'numspecial') {
-          const x = parseFloat(logMatches[i+1][2].slice(3)); // slice '>> ' off
-          const y = parseFloat(logMatches[i+2][2].slice(3)); // slice '>> ' off
+        const logMatchesIp1 = logMatches[i+1];
+        const logMatchesIp2 = logMatches[i+2];
+        if (
+          logMatchesIp1 !== undefined
+          && logMatchesIp1[1] === 'numspecial'
+          && logMatchesIp1[2] !== undefined
+          && logMatchesIp2 !== undefined
+          && logMatchesIp2[1] === 'numspecial'
+          && logMatchesIp2[2] !== undefined
+        ) {
+          const x = parseFloat(logMatchesIp1[2].slice(3)); // slice '>> ' off
+          const y = parseFloat(logMatchesIp2[2].slice(3)); // slice '>> ' off
           let label: types.MfLabel = {
             type: 'label',
             line: line,
@@ -218,6 +233,9 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
       }
     } else if (cmdName === 'shipout') {
       cmdBodyItems = cmdBodyItems.slice(1); // slice first item (path with line number) off
+      if (cmdBodyItems[0] === undefined || cmdBodyItems[1] === undefined || cmdBodyItems[2] === undefined || cmdBodyItems[3] === undefined || cmdBodyItems[4] === undefined || cmdBodyItems[5] === undefined || cmdBodyItems[6] === undefined || cmdBodyItems[7] === undefined || cmdBodyItems[8] === undefined || cmdBodyItems[9] === undefined) {
+        continue;
+      }
       const hppp = parseFloat(cmdBodyItems[0]);
       const shipout: types.MfShipout = {
         type: 'shipout',
@@ -239,14 +257,23 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
       const ligs: types.MfLigtable['ligs'] = [];
       const tmpList: number[] = [];
       let lastCmdBody: string;
+      if (cmdBodyItems[0] === undefined) {
+        continue;
+      }
       cmdBodyItems[0] = cmdBodyItems[0].slice(3);
       const hppp = parseInt(cmdBodyItems[0], 10);
       cmdBodyItems = cmdBodyItems.slice(1);
       for (i++; i < logMatches.length; i++) {
         const logMatch = logMatches[i];
+        if (logMatch === undefined || logMatch[1] === undefined || logMatch[2] === undefined) {
+          continue;
+        }
         const cmdName = logMatch[1];
         lastCmdBody = cmdBodyItems.at(-1)!;
         cmdBodyItems = logMatch[2].slice(3).split(/\n>> /);
+        if (cmdBodyItems[0] === undefined) {
+          continue;
+        }
         cmdBody = cmdBodyItems[0];
         if (cmdName === ':') {
           tmpList.push(toCharCode(lastCmdBody));
@@ -300,9 +327,12 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
 export function parsePathString(pathStr: string, line: number, curFilePath: string): types.MfPathData | undefined {
   pathStr = pathStr.replace(/\s/g, '');
   const pathMatch = pathStr.match(/\((-?[\d\.]+),(-?[\d\.]+)\)((?:\.\.controls\(.*?\)and\(.*?\)\.\.\(.*?\))+)(?:..controls\((-?[-\d\.]+),(-?[-\d\.]+)\)and\((-?[\d\.]+),(-?[\d\.]+)\)\.\.cycle)?/);
-  if (pathMatch) {
+  if (pathMatch && pathMatch[1] && pathMatch[2]) {
     const moveTo: [number, number] = [parseFloat(pathMatch[1]), parseFloat(pathMatch[2])];
     const bezierCurveTosStr = pathMatch[3];
+    if (bezierCurveTosStr === undefined) {
+      return;
+    }
     let cycle;
     if (pathMatch[4] && pathMatch[5] && pathMatch[6] && pathMatch[7]) {
       cycle = {
@@ -315,6 +345,9 @@ export function parsePathString(pathStr: string, line: number, curFilePath: stri
     let bezierCurveTos: types.BezierCurveTo[] = [];
     const cubicTosMatches = bezierCurveTosStr.matchAll(/\.\.controls\(([-\d\.]+),([-\d\.]+)\)and\(([-\d\.]+),([-\d\.]+)\)\.\.\(([-\d\.]+),([-\d\.]+)\)/g);
     for (const bezierCurveTosMatch of cubicTosMatches) {
+      if (bezierCurveTosMatch[1] === undefined || bezierCurveTosMatch[2] === undefined || bezierCurveTosMatch[3] === undefined || bezierCurveTosMatch[4] === undefined || bezierCurveTosMatch[5] === undefined || bezierCurveTosMatch[6] === undefined) {
+        continue;
+      }
       bezierCurveTos.push({
         cp1: [parseFloat(bezierCurveTosMatch[1]), parseFloat(bezierCurveTosMatch[2])],
         cp2: [parseFloat(bezierCurveTosMatch[3]), parseFloat(bezierCurveTosMatch[4])],
@@ -339,12 +372,15 @@ export function parsePictureString(pictureStr: string, line: number, curFilePath
   let picEdges = {};
   for (const rowStr of rowStrings) {
     const rowMatch = rowStr.match(/row (-?\d+): (.*)$/);
-    if (rowMatch) {
+    if (rowMatch && rowMatch[1] && rowMatch[2]) {
       const rowNum = parseInt(rowMatch[1]);
       const rowEdgesStr = rowMatch[2];
       const rowEdgeMatches = rowEdgesStr.matchAll(/(-?\d+)(\++|-+)/g);
       let rowEdges = {};
       for (const edgeMatch of rowEdgeMatches) {
+        if (edgeMatch[1] === undefined || edgeMatch[2] === undefined) {
+          continue;
+        }
         const colNum = parseInt(edgeMatch[1]);
         const edgesStr = edgeMatch[2];
         const edges = edgesStr.length * (edgesStr[0] === '-' ? -1 : 1);

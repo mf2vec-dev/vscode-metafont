@@ -159,6 +159,9 @@ export class MetafontDebugSession extends DebugAdapter.LoggingDebugSession {
         stackFrames = [];
         for (let i = this.mfDebugWrapper.stack.length-1; i >= 0; i--) {
           const stackFrame = this.mfDebugWrapper.stack[i];
+          if (stackFrame === undefined) {
+            continue;
+          }
           let stackFrameName: string;  // todo improve
           if (i === 0) {
             stackFrameName = '<job_file>';
@@ -222,16 +225,22 @@ export class MetafontDebugSession extends DebugAdapter.LoggingDebugSession {
       // pair or transform
       const i = args.variablesReference - (this.maxScopeRef+1);
       const varName = this.mfDebugWrapper.variableNames[i];
-      const varValue = await this.evaluateExpression(varName);
-      if (/\([^,]+,[^,]+\)/.test(varValue) || /\([^,]+(?:,[^,]+){5}\)/.test(varValue)) {
-        let valuesStr = varValue.slice(1, varValue.length-1); // remove ()
-        let values = valuesStr.split(',');
-        let partNames = [ 'xpart', 'ypart' ];
-        if (values.length === 6) {
-          partNames.push('xxpart', 'xypart', 'yxpart', 'yypart');
-        }
-        for (let i = 0; i < values.length; i++) {
-          variables.push(new DebugAdapter.Variable(partNames[i] + ' ' + varName, values[i]));
+      if (varName !== undefined) {
+        const varValue = await this.evaluateExpression(varName);
+        if (/\([^,]+,[^,]+\)/.test(varValue) || /\([^,]+(?:,[^,]+){5}\)/.test(varValue)) {
+          let valuesStr = varValue.slice(1, varValue.length-1); // remove ()
+          let values = valuesStr.split(',');
+          let partNames = [ 'xpart', 'ypart' ];
+          if (values.length === 6) {
+            partNames.push('xxpart', 'xypart', 'yxpart', 'yypart');
+          }
+          for (let i = 0; i < values.length; i++) {
+            const valueI = values[i];
+            if (valueI === undefined) {
+              continue;
+            }
+            variables.push(new DebugAdapter.Variable(partNames[i] + ' ' + varName, valueI));
+          }
         }
       }
     }

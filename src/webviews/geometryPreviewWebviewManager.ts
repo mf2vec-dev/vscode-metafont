@@ -178,10 +178,14 @@ export function mfPicture2PreviewPicture(mfPicture: types.MfPicture): types.Prev
     let neg: PixelRow[] = [];
     let curWeight = 0;
     let starts: number[] = [];
-    const edgeColumns = Object.keys(mfPicture.edges[rowNumStr]).map((x) => parseInt(x, 10)).sort((a, b) => a - b); // sort function required
+    const row = mfPicture.edges[rowNumStr];
+    if (row === undefined) {
+      continue;
+    }
+    const edgeColumns = Object.keys(row).map((x) => parseInt(x, 10)).sort((a, b) => a - b); // sort function required
     for (const colNum of edgeColumns) {
-      let edgeWeight = mfPicture.edges[rowNumStr][colNum];
-      if (edgeWeight === 0) {
+      let edgeWeight = row[colNum];
+      if (edgeWeight === 0 || edgeWeight === undefined) {
         continue;
       }
       if (edgeWeight > 0) {
@@ -247,18 +251,23 @@ export type BoxLine = {
 function combinePixelRows(picData: {[key: string]: {pos: BoxLine[]; neg: BoxLine[]}}, key: 'pos' | 'neg') {
   const rowNums = Object.keys(picData).map((k) => parseInt(k, 10)).sort((a, b) => a - b);
   for (const rowNum of rowNums) { // loop over rows
-    const rowData = picData[rowNum][key];
+    const row = picData[rowNum];
+    if (row === undefined) {
+      continue;
+    }
+    const rowData = row[key];
     for (const boxRow of rowData) { // loop over boxes in current row
       for (let i = rowNum+1; i < rowNums.at(-1)!; i++) { // loop over the rows following current row
-        if (picData[i] === undefined || picData[i][key].length === 0) {
+        const picDataI = picData[i];
+        if (picDataI === undefined || picDataI[key].length === 0) {
           break;
         }
         let found = false;
-        for (let j = 0; j < picData[i][key].length; j++) { // loop over all boxes in the next row
-          const belowBoxLine = picData[i][key][j];
-          if (boxRow[1] === belowBoxLine[1] && boxRow[2] === belowBoxLine[2]) {
+        for (let j = 0; j < picDataI[key].length; j++) { // loop over all boxes in the next row
+          const belowBoxLine = picDataI[key][j];
+          if (belowBoxLine !== undefined && boxRow[1] === belowBoxLine[1] && boxRow[2] === belowBoxLine[2]) {
             boxRow[3] += 1;
-            picData[i][key].splice(j, 1);
+            picDataI[key].splice(j, 1);
             found = true;
             break; // only one box per line
           }

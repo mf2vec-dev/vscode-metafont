@@ -13,5 +13,11 @@ export function toCharLabel(charCode: number) {
 }
 
 export function applyParams(template: string, params: { [key: string]: string }) {
-  return template.replace(/\${(.*?)}/g, (substr, p) => params[p]);
+  return template.replace(/\${(.*?)}/g, (substr, p) => {
+    const paramP = params[p];
+    if (paramP !== undefined) {
+      return paramP;
+    }
+    return substr;
+  });
 }

@@ -46,7 +46,7 @@ function generateGftodviProofSheet(filePath: string | undefined, undefinedPathIn
   const mfBuffer = childProcess.execSync(applyParams('${mf} -interaction=nonstopmode ${jobPath}', { mf: 'mf', jobPath: filePath }), execOptions);
   const lastLines = mfBuffer.toString().split('\n').slice(-4).join('\n');
   const outputLineMatch = lastLines.match(/^Output written on ((.*)\.\d+gf) \(.*\).$/m);
-  if (outputLineMatch === null) {
+  if (outputLineMatch === null || outputLineMatch[1] === undefined || outputLineMatch[2] === undefined) {
     vscode.window.showInformationMessage('No output could be identified from the METAFONT run. Make sure mode is not batchmode.');
   } else {
     const gfFileName = outputLineMatch[1];

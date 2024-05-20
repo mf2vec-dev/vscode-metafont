@@ -234,7 +234,11 @@ connection.onCompletion((completionParams: CompletionParams) => {
     if (
       identifierInfo.declarationTokens.every((tokenRef) => tokenRef.filePath === uri)
       && identifierInfo.declarationTokens.every((tokenRef) => {
-        const declarationPosition = documentManager.getTokenRange(document, documentData.tokens[tokenRef.idx]);
+        const tokenData = documentData.tokens[tokenRef.idx];
+        if (tokenData === undefined) {
+          return false;
+        }
+        const declarationPosition = documentManager.getTokenRange(document, tokenData);
         return (
           declarationPosition.end.line > completionPosition.line
           || (declarationPosition.end.line === completionPosition.line && declarationPosition.end.character > completionPosition.character)
@@ -367,16 +371,20 @@ connection.listen();
  * As a workaround, we sort tokens.data by line so there are no negative values.
  */
 function sortSemanticTokens(tokens: SemanticTokens): SemanticTokens {
-  const tokenDataSplitted = Array.from<unknown, number[]>(
+  const tokenDataSplitted = Array.from<unknown, [number, number, number, number, number]>(
     { length: tokens.data.length / 5 },
-    (_, i) => tokens.data.slice(i * 5, (i + 1) * 5)
+    (_, i) => tokens.data.slice(i * 5, (i + 1) * 5) as [number, number, number, number, number]
   );
   // make abs line and char number
-  const tokenDataSplittedAbs = tokenDataSplitted.reduce<number[][]>(
+  const tokenDataSplittedAbs = tokenDataSplitted.reduce<[number, number, number, number, number][]>(
     (accumulator, currentValue, currentIndex) => {
+      const lastVal = accumulator[currentIndex - 1];
+      if (lastVal === undefined) {
+        return accumulator;
+      }
       accumulator.push([
-        currentIndex === 0 ? currentValue[0] : currentValue[0] + accumulator[currentIndex - 1][0],
-        ...currentValue.slice(1)
+        currentIndex === 0 ? currentValue[0] : currentValue[0] + lastVal[0],
+        ...(currentValue.slice(1) as [number, number, number, number])
       ]);
       return accumulator;
     },
@@ -386,8 +394,12 @@ function sortSemanticTokens(tokens: SemanticTokens): SemanticTokens {
   // turn back into differences
   const tokenDataSplittedSorted = tokenDataSplittedAbs.reduce<number[][]>(
     (accumulator, currentValue, currentIndex) => {
+      let lastVal = tokenDataSplittedAbs[currentIndex - 1];
+      if (lastVal === undefined) {
+        return accumulator;
+      }
       accumulator.push([
-        currentIndex === 0 ? currentValue[0] : currentValue[0] - tokenDataSplittedAbs[currentIndex - 1][0],
+        currentIndex === 0 ? currentValue[0] : currentValue[0] - lastVal[0],
         ...currentValue.slice(1)
       ]);
       return accumulator;

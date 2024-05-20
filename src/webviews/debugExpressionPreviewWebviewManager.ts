@@ -29,6 +29,9 @@ export abstract class DebugExpressionPreviewWebviewManager extends FileIndepende
       let previewItems: types.PreviewItem[] = [];
       if (this.expr) {
         const mfDebugSession = debugAdapterFactory.debugSessions[session.id];
+        if (mfDebugSession === undefined) {
+          return;
+        }
         const result = await mfDebugSession.mfDebugWrapper.evaluateExpression(this.expr);
         if (result.kind === 'value' && result.type) {
           const line = 0;

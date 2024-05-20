@@ -136,7 +136,11 @@ export class MetafontParser {
 
     outerTokenLoop: for (let i = 0; i < tokens.length; i++) {
       let lastTokenLine = tokenLine;
-      tokenLine = this.documentManager.getTokenRange(textDocument, tokens[i]).start.line;
+      let tokenI = tokens[i];
+      if (tokenI === undefined) {
+        break outerTokenLoop;
+      }
+      tokenLine = this.documentManager.getTokenRange(textDocument, tokenI).start.line;
       if (tokenLine !== lastTokenLine) {
         // this is the first token of a new line
         if (parseMode === ParseMode.nextLineNotReachable) {
@@ -184,7 +188,7 @@ export class MetafontParser {
           });
           // parseMode stays the same
         } else {
-          tokens[i][3] |= TokenFlag.unexpected;
+          tokenI[3] |= TokenFlag.unexpected;
         }
         break;
       case 'else':
@@ -204,9 +208,9 @@ export class MetafontParser {
           conditionalBlock.bodyTexts?.push({
             bodyTextKind: BodyTextKind.else
           });
-          nestingStructure[nestingStructure. length-1].parseMode = ParseMode.fi;
+          nestingStructure.at(-1)!.parseMode = ParseMode.fi; // if is checking for undefined of at(-1)
         } else {
-          tokens[i][3] |= TokenFlag.unexpected;
+          tokenI[3] |= TokenFlag.unexpected;
         }
         break;
       case 'fi':
@@ -223,11 +227,11 @@ export class MetafontParser {
           parseMode = this.combineParseMode(nestingStructure.at(-1)!);
           nestingStructure.pop();
           if (parseMode === ParseMode.multiple) {
-            tokens[i][3] |= TokenFlag.multipleParseModes;
+            tokenI[3] |= TokenFlag.multipleParseModes;
             parseMode = ParseMode.nothing;
           }
         } else {
-          tokens[i][3] |= TokenFlag.unexpected;
+          tokenI[3] |= TokenFlag.unexpected;
         }
         break;
       case 'for':
@@ -252,7 +256,7 @@ export class MetafontParser {
 
           nestingStructure.pop();
         } else {
-          tokens[i][3] |= TokenFlag.unexpected;
+          tokenI[3] |= TokenFlag.unexpected;
         }
         break;
       case 'boolean':
@@ -264,16 +268,32 @@ export class MetafontParser {
       case 'string':
       case 'transform':
         i++;
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break outerTokenLoop;
+        }
         this.handleNotReachable(parseMode, tokens, i);
         let endOfDeclarationList = false;
         declaredVariableLoop: for (; i < tokens.length; i++) {
+          let tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           this.handleNotReachable(parseMode, tokens, i);
           let declaredVariableParts: string[] = [];
           for (; i < tokens.length; i++) {
+            let tokenI = tokens[i];
+            if (tokenI === undefined) {
+              break outerTokenLoop;
+            }
             this.handleNotReachable(parseMode, tokens, i);
             const symbolicTokenStr = this.getTokenStr(textDocument, i);
             if (symbolicTokenStr === undefined) {
-              tokens[i - 1][3] |= TokenFlag.missingNext;
+              let tokenIm1 = tokens[i-1];
+              if (tokenIm1 === undefined) {
+                break replacedTokenSwitch; // since looking back
+              }
+              tokenIm1[3] |= TokenFlag.missingNext;
               break declaredVariableLoop;
             } else if (symbolicTokenStr === ';') {
               endOfDeclarationList = true;
@@ -287,11 +307,19 @@ export class MetafontParser {
               if (symbolicTokenStr === '[') {
                 const closingBracketTokenStr = this.getTokenStr(textDocument, i + 1);
                 if (closingBracketTokenStr !== ']') {
-                  tokens[i + 1][3] |= TokenFlag.unexpected;
+                  let tokenIp1 = tokens[i+1];
+                  if (tokenIp1 === undefined) {
+                    break outerTokenLoop;
+                  }
+                  tokenIp1[3] |= TokenFlag.unexpected;
                   break;
                 }
                 declaredVariableParts.push('[]');
                 i++; // continue after ]
+                let tokenI = tokens[i];
+                if (tokenI === undefined) {
+                  break outerTokenLoop;
+                }
                 this.handleNotReachable(parseMode, tokens, i);
               } else {
                 declaredVariableParts.push(symbolicTokenStr);
@@ -367,15 +395,27 @@ export class MetafontParser {
         identifiers.set(leftHandTokenStr, identifierInfo);
 
         if (['(', ')'].includes(rightHandTokenStr)) { // [The METAFONTbook, p 218]
-          tokens[i + 3][3] |= TokenFlag.letRightHandSideDelimiterP218;
+          let tokenIp3 = tokens[i+3];
+          if (tokenIp3 === undefined) {
+            break outerTokenLoop;
+          }
+          tokenIp3[3] |= TokenFlag.letRightHandSideDelimiterP218;
         }
         this.applyParserResults(i + 1, leftHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens, signatureHelps); // left hand
         this.applyParserResults(i + 3, rightHandTokenStr, identifiers, semanticHovers, declarations, definitions, semanticTokens, signatureHelps); // right hand
         i += 4;
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break outerTokenLoop;
+        }
         break;
       case 'def':
       case 'vardef':
         i++; // continue with symbolic token (macro name)
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break outerTokenLoop;
+        }
         this.handleNotReachable(parseMode, tokens, i);
         let declaredVariableStr = this.getTokenStr(textDocument, i);
         if (declaredVariableStr === undefined) {
@@ -383,9 +423,17 @@ export class MetafontParser {
         }
         let declaredVariableI = i;
         i++; // continue after symbolic token (after first part of macro name)
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break outerTokenLoop;
+        }
         this.handleNotReachable(parseMode, tokens, i);
         // collect suffixes
         for (; i < tokens.length; i++) {
+          tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           this.handleNotReachable(parseMode, tokens, i);
           let nextTokenStr = this.getTokenStr(textDocument, i);
           if (nextTokenStr === undefined) {
@@ -396,6 +444,10 @@ export class MetafontParser {
           } else if (nextTokenStr === '[' && this.getTokenStr(textDocument, i+1) === ']') {
             declaredVariableStr += '[]';
             i++; // because [] are 2 tokens
+            tokenI = tokens[i];
+            if (tokenI === undefined) {
+              break outerTokenLoop;
+            }
             this.handleNotReachable(parseMode, tokens, i);
           } else {
             if (declaredVariableStr.at(-1) !== ']') {
@@ -411,6 +463,10 @@ export class MetafontParser {
         this.handleNotReachable(parseMode, tokens, i);
         let nextTokenStr = this.getTokenStr(textDocument, i);
         i++;
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break outerTokenLoop;
+        }
         this.handleNotReachable(parseMode, tokens, i);
         if (nextTokenStr === '@#') {
           hoverStr += '@#';
@@ -420,6 +476,10 @@ export class MetafontParser {
           this.handleNotReachable(parseMode, tokens, i);
           nextTokenStr = this.getTokenStr(textDocument, i);
           i++; // continue after @#
+          tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           this.handleNotReachable(parseMode, tokens, i);
         }
         if (nextTokenStr === undefined) {
@@ -448,6 +508,10 @@ export class MetafontParser {
             parameterType = parameterType!; // it's known, reuse it
           }
           i++; // continue with parameter token
+          tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           while (nextTokenStr !== ')') {
             this.handleNotReachable(parseMode, tokens, i);
             const parameterTokenStr = this.getTokenStr(textDocument, i);
@@ -455,6 +519,10 @@ export class MetafontParser {
             sigLabel += parameterTokenStr;
             params.push({label: [sigLabel.length-parameterTokenStr!.length, sigLabel.length], isDelimited: true, paramType: parameterType});
             i++; // go to token after parameter: , or )
+            tokenI = tokens[i];
+            if (tokenI === undefined) {
+              break outerTokenLoop;
+            }
             this.handleNotReachable(parseMode, tokens, i);
             nextTokenStr = this.getTokenStr(textDocument, i); // should be , or )
             if (nextTokenStr === undefined || ![',', ')'].includes(nextTokenStr)) {
@@ -464,10 +532,18 @@ export class MetafontParser {
               sigLabel += ',';
             } // else it's ), increase i and break loop with while condition
             i++; // continue after , or )
+            tokenI = tokens[i];
+            if (tokenI === undefined) {
+              break outerTokenLoop;
+            }
           }
           this.handleNotReachable(parseMode, tokens, i);
           nextTokenStr = this.getTokenStr(textDocument, i);
           i++; // continue after ) (undelimited parameter type or =)
+          tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           this.handleNotReachable(parseMode, tokens, i);
           lastParameterTypeTokenStr = parameterTypeTokenStr;
         }
@@ -491,14 +567,26 @@ export class MetafontParser {
           sigLabel += `${nextTokenStr} ${parameterToken}`;
           params.push({label: [sigLabel.length-parameterToken!.length, sigLabel.length], isDelimited: false, paramType: nextTokenStr});
           i++; // continue after parameter token (of = :=)
+          tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           if (nextTokenStr === 'expr') {
             this.handleNotReachable(parseMode, tokens, i);
             const ofTokenStr = this.getTokenStr(textDocument, i);
             if (ofTokenStr === 'of') {
               i++;
+              tokenI = tokens[i];
+              if (tokenI === undefined) {
+                break outerTokenLoop;
+              }
               this.handleNotReachable(parseMode, tokens, i);
               parameterToken  = this.getTokenStr(textDocument, i);
               i++;
+              tokenI = tokens[i];
+              if (tokenI === undefined) {
+                break outerTokenLoop;
+              }
               hoverStr += ` of ${parameterToken}`;
               sigLabel += ` of ${parameterToken}`;
               params.push({label: [sigLabel.length-parameterToken!.length, sigLabel.length], isDelimited: false, paramType: 'of'});
@@ -525,6 +613,10 @@ export class MetafontParser {
         });
         nestingStructure.push({ kind: NestingBlockKind.macro, parseMode: ParseMode.enddef });
         i--; // i will be increased by loop
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break replacedTokenSwitch; // since looking back
+        }
         break;
       case 'primarydef':
       case 'secondarydef':
@@ -533,7 +625,7 @@ export class MetafontParser {
         const leveldevSymbolicTokenStr = this.getTokenStr(textDocument, i + 2);
         const rightParameterTokenStr = this.getTokenStr(textDocument, i + 3);
         if (leftParameterTokenStr === undefined || leveldevSymbolicTokenStr === undefined || rightParameterTokenStr === undefined) {
-          break;
+          break replacedTokenSwitch;
         }
         this.handleNotReachable(parseMode, tokens, i + 1);
         this.handleNotReachable(parseMode, tokens, i + 2);
@@ -548,6 +640,10 @@ export class MetafontParser {
         });
         nestingStructure.push({kind: NestingBlockKind.macro, parseMode: ParseMode.enddef});
         i += 4;
+        tokenI = tokens[i];
+        if (tokenI === undefined) {
+          break outerTokenLoop;
+        }
         break;
       case 'enddef':
         // A definition can begin a conditional without ending it, look for enddef requirement in all nesting depths.
@@ -555,15 +651,15 @@ export class MetafontParser {
         if (structureIndex >= 0) {
           nestingStructure.length = structureIndex; // remove macro and deeper nesting levels
         } else {
-          tokens[i][3] |= TokenFlag.unexpected;
+          tokenI[3] |= TokenFlag.unexpected;
         }
         break;
       case 'end':
         if (nestingStructure.some((s) => s.kind === NestingBlockKind.loop)) {
-          tokens[i][3] |= TokenFlag.forbiddenEndInLoop;
+          tokenI[3] |= TokenFlag.forbiddenEndInLoop;
         }
         if (nestingStructure.some((s) => s.kind === NestingBlockKind.condition)) {
-          tokens[i][3] |= TokenFlag.endInCondition;
+          tokenI[3] |= TokenFlag.endInCondition;
         }
         parseMode = ParseMode.notReachable;
         break;
@@ -571,30 +667,41 @@ export class MetafontParser {
         parseMode = ParseMode.nextLineNotReachable;
         break;
       case 'input':
-        const inputTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i]);
+        const inputTokenRange = this.documentManager.getTokenRange(textDocument, tokenI);
         const lineNum = inputTokenRange.end.line;
         const line = textDocument.getText().split('\n')[lineNum];
+        if (line === undefined) {
+          break replacedTokenSwitch;
+        }
         const lineAfterInput = line.slice(inputTokenRange.end.character);
         const filenameMatch = lineAfterInput.match(/^\s*([^\s;]*)/d);
         if (filenameMatch === null || filenameMatch.indices === undefined) {
-          break;
+          break replacedTokenSwitch;
+        }
+        const filenameMatch1 = filenameMatch[1];
+        const filenameMatchIndices1 = filenameMatch.indices[1];
+        if (filenameMatch1 === undefined || filenameMatchIndices1 === undefined) {
+          break replacedTokenSwitch;
         }
         // turn relative paths into absolute paths using cwd (workspace)
-        let inputPath = path.resolve(filenameMatch[1]);
+        let inputPath = path.resolve(filenameMatch1);
         if (!inputPath.endsWith('.mf') && !existsSync(inputPath) && existsSync(inputPath + '.mf')) {
           inputPath += '.mf';
         }
         if (!existsSync(inputPath)) {
           // cannot find in cwd (workspace)
           // use kpsewhich to find file
-          const ret = spawnSync('kpsewhich', ['-format=mf', filenameMatch[1]]);
+          const ret = spawnSync('kpsewhich', ['-format=mf', filenameMatch1]);
           if (ret.status === 0) {
-            inputPath = ret.stdout.toString().split('\n')[0].trim(); // first line of output
+            const firstOutputLine = ret.stdout.toString().split('\n')[0];
+            if (firstOutputLine !== undefined) {
+              inputPath = firstOutputLine.trim();
+            }
           }
         }
         const inputUri = pathToFileURL(inputPath).toString();
-        const startChar = inputTokenRange.end.character + filenameMatch.indices[1][0];
-        const endChar = inputTokenRange.end.character + filenameMatch.indices[1][1];
+        const startChar = inputTokenRange.end.character + filenameMatchIndices1[0];
+        const endChar = inputTokenRange.end.character + filenameMatchIndices1[1];
         const startPos = {character: startChar, line: lineNum};
         const endPos = {character: endChar, line: lineNum};
         const input: Input = {
@@ -608,15 +715,18 @@ export class MetafontParser {
         inputs.push(input);
 
         // Ignore anything that was identified as a token where the filename/path is.
-        if (i+1 < tokens.length) {
-          let nextTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i+1]);
+        let tokenIp1 = tokens[i+1];
+        if (tokenIp1 !== undefined) {
+          let nextTokenRange = this.documentManager.getTokenRange(textDocument, tokenIp1);
           while (nextTokenRange.end.line === lineNum && nextTokenRange.end.character <= endChar) {
-            tokens[i+1][3] |= TokenFlag.ignore;
+            tokenIp1[3] |= TokenFlag.ignore;
             i++;
-            if (i+1 >= tokens.length) {
-              break;
+            tokenI = tokens[i];
+            tokenIp1 = tokens[i+1];
+            if (tokenI === undefined || tokenIp1 === undefined) {
+              break outerTokenLoop;
             }
-            nextTokenRange = this.documentManager.getTokenRange(textDocument, tokens[i+1]);
+            nextTokenRange = this.documentManager.getTokenRange(textDocument, tokenIp1);
           }
         }
 
@@ -639,6 +749,10 @@ export class MetafontParser {
           // TODO macro names with multiple tokens (vardef)
           const mainTokenIdx = i;
           i++; // go to next token after macro name
+          tokenI = tokens[i];
+          if (tokenI === undefined) {
+            break outerTokenLoop;
+          }
           let p = 0;
           params = mainIdentifierInfo.signatureHelp.parameters;
           let paramP = params[p];
@@ -648,10 +762,11 @@ export class MetafontParser {
           let nextTokenStr: string | undefined;
 
           // @#
-          if (params[p].paramType === '@#') {
+          if (paramP.paramType === '@#') {
             for (; i < tokens.length; i++) {
+              tokenI = tokens[i];
               nextTokenStr = this.getTokenStr(textDocument, i);
-              if (nextTokenStr === undefined) {
+              if (tokenI === undefined || nextTokenStr === undefined) {
                 break outerTokenLoop;
               }
               // TODO replacement (let)
@@ -665,6 +780,10 @@ export class MetafontParser {
               });
             }
             p++;
+            paramP = params[p];
+            if (paramP === undefined) {
+              break replacedTokenSwitch;
+            }
           }
 
           // delimited parameters
@@ -674,7 +793,7 @@ export class MetafontParser {
           }
           let inDelimiters = false;
           let delimiterDepth = 0; // TODO different delimiters, matching pairs of different delimiters
-          while (i < tokens.length && p < params.length && params[p].isDelimited) {
+          while (i < tokens.length && p < params.length && paramP.isDelimited) {
             if (!inDelimiters) {
               if (nextTokenStr === '(') {
                 delimiterDepth++;
@@ -685,7 +804,7 @@ export class MetafontParser {
                 });
                 inDelimiters = true;
               } else { // nextTokenStr !== '('
-                tokens[i][3] |= TokenFlag.tooFewDelimitedParameters;
+                tokenI[3] |= TokenFlag.tooFewDelimitedParameters;
                 break replacedTokenSwitch;
               }
             } else { // inDelimiters
@@ -695,13 +814,21 @@ export class MetafontParser {
                 delimiterDepth--;
                 if (delimiterDepth === 0){
                   p++;
+                  paramP = params[p];
+                  if (paramP === undefined) {
+                    break replacedTokenSwitch;
+                  }
                   inDelimiters = false;
                 }
-              } else if (nextTokenStr === ',' && params[p].paramType !== 'text') {
+              } else if (nextTokenStr === ',' && paramP.paramType !== 'text') {
                 // delimited text only ends with )
                 // , is allowed in text argument
                 // [The METAFONTbook, p. 166, 249]
                 p++;
+                paramP = params[p];
+                if (paramP === undefined) {
+                  break replacedTokenSwitch;
+                }
               } // else token i is part of the delimited argument
               signatureHelps.set(i, {
                 isParam: true,
@@ -710,13 +837,14 @@ export class MetafontParser {
               });
             }
             i++; // next token
+            tokenI = tokens[i];
             nextTokenStr = this.getTokenStr(textDocument, i);
-            if (nextTokenStr === undefined) {
+            if (tokenI === undefined || nextTokenStr === undefined) {
               break outerTokenLoop;
             }
           }
-          if ((p >= params.length || !params[p].isDelimited) && inDelimiters) {
-            tokens[i][3] |= TokenFlag.tooManyDelimitedParameters;
+          if ((p >= params.length || !paramP.isDelimited) && inDelimiters) {
+            tokenI[3] |= TokenFlag.tooManyDelimitedParameters;
           }
 
           // undelimited parameters
@@ -729,24 +857,25 @@ export class MetafontParser {
             break outerTokenLoop;
           }
           if (['=', ':='].includes(nextTokenStr)) {
-            if (['primary', 'secondary', 'tertiary', 'expr'].includes(params[p].paramType)) {
+            if (['primary', 'secondary', 'tertiary', 'expr'].includes(paramP.paramType)) {
               signatureHelps.set(i, {
                 isParam: true,
                 mainTokenIdx: mainTokenIdx,
                 param: p
               });
               i++;
+              tokenI = tokens[i];
               nextTokenStr = this.getTokenStr(textDocument, i);
-              if (nextTokenStr === undefined) {
+              if (tokenI === undefined || nextTokenStr === undefined) {
                 break outerTokenLoop;
               }
-            } else if (params[p].paramType === 'suffix') {
-              tokens[i][3] |= TokenFlag.undelimitedSuffixParameterWithIs;
+            } else if (paramP.paramType === 'suffix') {
+              tokenI[3] |= TokenFlag.undelimitedSuffixParameterWithIs;
             }
           }
           // METAFONT allows (<suffix>) as undelimited parameter
           inDelimiters = false;
-          if (params[p].paramType === 'suffix' && nextTokenStr === '(') {
+          if (paramP.paramType === 'suffix' && nextTokenStr === '(') {
             inDelimiters = true;
             signatureHelps.set(i, {
               isParam: true,
@@ -754,8 +883,9 @@ export class MetafontParser {
               param: p
             });
             i++;
+            tokenI = tokens[i];
             nextTokenStr = this.getTokenStr(textDocument, i);
-            if (nextTokenStr === undefined) {
+            if (tokenI === undefined || nextTokenStr === undefined) {
               break outerTokenLoop;
             }
           }
@@ -777,11 +907,20 @@ export class MetafontParser {
             } else if (nextTokenStr === 'end') {
               // end of undelimited parameter
               break replacedTokenSwitch;
-            } else if (params[p].paramType === 'expr' && nextTokenStr === 'of') {
-              if (p+1 < params.length && params[p+1].paramType === 'of') {
-                p++;
+            } else if (paramP.paramType === 'expr' && nextTokenStr === 'of') {
+              let paramPp1 = params[p+1];
+              paramPp1 = params[p];
+              if (paramPp1 === undefined) {
+                break replacedTokenSwitch;
               }
-            } else if (params[p].paramType !== 'text' && sparks.primitives.includes(nextTokenStr)) {
+              if (p+1 < params.length && paramPp1.paramType === 'of') {
+                p++;
+                paramP = params[p];
+                if (paramP === undefined) {
+                  break replacedTokenSwitch;
+                }
+              }
+            } else if (paramP.paramType !== 'text' && sparks.primitives.includes(nextTokenStr)) {
               // text is the only parameter type that can include sparks
               // otherwise: end of undelimited parameter
               break replacedTokenSwitch;
@@ -794,8 +933,9 @@ export class MetafontParser {
               param: p
             });
             i++;
+            tokenI = tokens[i];
             nextTokenStr = this.getTokenStr(textDocument, i);
-            if (nextTokenStr === undefined) {
+            if (tokenI === undefined || nextTokenStr === undefined) {
               break outerTokenLoop;
             }
             if (breakAfterThis) {
@@ -830,7 +970,7 @@ export class MetafontParser {
       (identifierNamesAcc, identifierNamesCur) => identifierNamesAcc.filter((identifierName) => identifierNamesCur.includes(identifierName))
     );
     identifierNameLoop: for (const identifierName of identifierNamesBeforeAllInputs) {
-      const identifierInfo = identifiersBeforeInputs[0].get(identifierName)!; // filtered above so this is not undefined
+      const identifierInfo = identifiersBeforeInputs[0]!.get(identifierName)!; // filtered above so this is not undefined
       for (const identifiersBeforeInput of identifiersBeforeInputs.slice(1)) {
         const identifierInfo_ = identifiersBeforeInput.get(identifierName)!; // filtered above so this is not undefined
         if (identifierInfo.hover !== identifierInfo_.hover) {
@@ -853,8 +993,9 @@ export class MetafontParser {
   }
 
   private handleNotReachable(parseMode: ParseMode, tokens: TokenData[], i: number) {
-    if (parseMode === ParseMode.notReachable) {
-      tokens[i][3] = TokenFlag.unreachable;
+    const tokenI = tokens[i];
+    if (tokenI !== undefined && parseMode === ParseMode.notReachable) {
+      tokenI[3] = TokenFlag.unreachable;
     }
   }
 
@@ -863,11 +1004,12 @@ export class MetafontParser {
    */
   private fixUnreachable(conditionalBlock: NestingBlockInfo, parseMode: ParseMode, tokens: TokenData[], i: number) {
     // if parseMode changed
-    if (conditionalBlock.parseModesBeforeBlock !== undefined && conditionalBlock.parseModesBeforeBlock !== parseMode) {
-      tokens[i][3] &= ~TokenFlag.unreachable; // turn off
+    const tokenI = tokens[i];
+    if (tokenI !== undefined && conditionalBlock.parseModesBeforeBlock !== undefined && conditionalBlock.parseModesBeforeBlock !== parseMode) {
+      tokenI[3] &= ~TokenFlag.unreachable; // turn off
       if (conditionalBlock.parseModesBeforeBlock === ParseMode.notReachable) {
         // turn on according to parseModesBeforeBlock
-        tokens[i][3] |= TokenFlag.unreachable;
+        tokenI[3] |= TokenFlag.unreachable;
       }
     }
   }
@@ -910,15 +1052,15 @@ export class MetafontParser {
         }, '');
         let tokenType: TokenType | undefined;
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
-          tokenType = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.tokenType;
+          tokenType = nestedBlockInfo.bodyTexts![0]!.identifiers?.get(identifierName)?.tokenType;
         };
         let completionItemKind: CompletionItemKind | undefined;
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
-          completionItemKind = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.completionItemKind;
+          completionItemKind = nestedBlockInfo.bodyTexts![0]!.identifiers?.get(identifierName)?.completionItemKind;
         };
         let replacement: TokenRef | undefined;
         if ((nestedBlockInfo.bodyTexts!).length === 1) {
-          replacement = nestedBlockInfo.bodyTexts![0].identifiers?.get(identifierName)?.replacement;
+          replacement = nestedBlockInfo.bodyTexts![0]!.identifiers?.get(identifierName)?.replacement;
         };
         const identifierInfo: IdentifierInfo = {
           declarationTokens: declarationTokens,
@@ -1006,6 +1148,9 @@ export class MetafontParser {
         continue;
       }
       const declarationOrDefinitionTokenData = documentData.tokens[declarationOrDeclarationToken.idx];
+      if (declarationOrDefinitionTokenData === undefined) {
+        continue;
+      }
       tokenLocationLinks.push({
         uri: uri,
         range: this.documentManager.getTokenRange(textDocument, declarationOrDefinitionTokenData)

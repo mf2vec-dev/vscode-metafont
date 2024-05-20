@@ -89,19 +89,18 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
             const ligatureLine = this.ligtableLigatureLines.findLast((l) => l[0] === codePoint && l[1] === nextCodePoint);
             if (ligatureLine === undefined) {
               break;
-            } else {
-              const ligaType = ligatureLine[2].split('=:');
-              let insertCodePoints: number[] = [];
-              if (ligaType[0] === '|') {
-                insertCodePoints.push(ligatureLine[0]);
-              }
-              insertCodePoints.push(ligatureLine[3]);
-              if (ligaType[1][0] === '|') {
-                insertCodePoints.push(ligatureLine[1]);
-              }
-              // todo > and >>
-              encodedText.splice(i, 2, ...insertCodePoints);
             }
+            const ligaType = ligatureLine[2].split('=:');
+            let insertCodePoints: number[] = [];
+            if (ligaType[0] === '|') {
+              insertCodePoints.push(ligatureLine[0]);
+            }
+            insertCodePoints.push(ligatureLine[3]);
+            if (ligaType[1] !== undefined && ligaType[1][0] === '|') {
+              insertCodePoints.push(ligatureLine[1]);
+            }
+            // todo > and >>
+            encodedText.splice(i, 2, ...insertCodePoints);
           }
         }
       }
@@ -109,6 +108,9 @@ export abstract class FontPreviewWebviewManager extends FontWebviewManagerMixin(
       let xGlyphPos = 0;
       for (let i = 0; i < encodedText.length; i++) {
         const codePoint = encodedText[i];
+        if (codePoint === undefined) {
+          continue;
+        }
         // kerning pairs
         if (this.kerning && i > 0) { // no kerning for first char
           const previousCodePoint = encodedText[i-1];

@@ -223,10 +223,13 @@ export class MetafontDebugWrapper extends EventEmitter {
     }
     return false;
   }
-  advanceCurrentLine() {
+  advanceCurrentLine(): boolean {
     const currentStackFrame = this.stack.at(-1);
     if (currentStackFrame) {
       const currentinputFile = this.inputFiles[currentStackFrame.filePath];
+      if (currentinputFile ===  undefined) {
+        return true; // could not advance
+      }
       const currentLine = currentStackFrame.lineNumber;
       if (currentLine < currentinputFile.lines.length-1) {
         currentStackFrame.lineNumber++;
@@ -241,7 +244,7 @@ export class MetafontDebugWrapper extends EventEmitter {
         this.sendEvent('end');
         return true; // reached end, could not advance
       }
-      return false;
+      return false; // ok, could advance
     }
     return true; // no current stack, could not advance
   }
@@ -362,7 +365,7 @@ export class MetafontDebugWrapper extends EventEmitter {
       // error message start with ! and end with the line after the line beginning with <*>
       const resultErrorMatch = tokenProcessingResult.cleanResponse.match(/^(.*)((! .*?)\n.*?(<\*>.*?\n.*?))\n(.*)$/ms);
       // [ everything, beforeError, errorFull, errorFirstLine, last2ErrorLines, afterError ]
-      if (resultErrorMatch) {
+      if (resultErrorMatch && resultErrorMatch[1] && resultErrorMatch[2] && resultErrorMatch[5]) {
         this.sendEvent('stoppedOnException', resultErrorMatch[2]);
         tokenProcessingResult.cleanResponse = resultErrorMatch[1] + resultErrorMatch[5];
         tokenProcessingResult.exception = true;
@@ -371,7 +374,7 @@ export class MetafontDebugWrapper extends EventEmitter {
       let traces: types.Trace[] = [];
       let inputMatch = tokenProcessingResult.cleanResponse.match(/^(.*?)@mf2vec@input \(([^\n]+?)(?:\n@mf2vec@\n?([^()]*?(?:\([^()]*\)[^()]*?)*)\)|\)\n@mf2vec@)(.*?)\n\*$/s); // ) is before @mf2vec@ if file is empty
       // inputMatch: [everything, inLineBeforeInput, inputPath, firstLineInFile, inLineAfterInput]
-      if (inputMatch) {
+      if (inputMatch && inputMatch[2]) {
         tokenProcessingResult.input = {
           inputPath: inputMatch[2]
         };
@@ -402,27 +405,29 @@ export class MetafontDebugWrapper extends EventEmitter {
         } else if (saveOrNewinternalTrace){
           let saveOrNewinternalTraceStrings = saveOrNewinternalTrace.split('\n> ');
           let saveOrNewinternal = saveOrNewinternalTraceStrings[0];
-          saveOrNewinternalTraceStrings = saveOrNewinternalTraceStrings.slice(1);
-          // saveOrNewinternalTraceStrings = saveOrNewinternalTraceStrings.map((variable) => variable.slice(1, variable.length-1)); // remove ""
-          saveOrNewinternalTraceStrings = saveOrNewinternalTraceStrings.map((variable) => {
-            // After showtoken's = can only follow a primitive, 'tag' or 'macro...'.
-            if (variable.split('=').length === 2) { // 1 =
-              return variable.split('=')[0];
-            } else { // multiple =
-              // this is difficult:
-              // *let |=| = :; let | = |=:; showtoken |=|,|;
-              // > |=|=:
-              // > |=|=:
-              return ''; // ignore
-            }
-          });
-          let saveOrNewinternalTraces = saveOrNewinternalTraceStrings.filter((saveOrNewinternalTrace) => saveOrNewinternalTrace !== undefined).map((saveOrNewinternalTrace) => {
-            return {
-              type: saveOrNewinternal,
-              trace: saveOrNewinternalTrace
-            };
-          });
-          matchTraces.push(...saveOrNewinternalTraces);
+          if (saveOrNewinternal !== undefined) {
+            saveOrNewinternalTraceStrings = saveOrNewinternalTraceStrings.slice(1);
+            // saveOrNewinternalTraceStrings = saveOrNewinternalTraceStrings.map((variable) => variable.slice(1, variable.length-1)); // remove ""
+            saveOrNewinternalTraceStrings = saveOrNewinternalTraceStrings.map((variable) => {
+              // After showtoken's = can only follow a primitive, 'tag' or 'macro...'.
+              if (variable.split('=').length === 2) { // 1 =
+                return variable.split('=')[0]!;
+              } else { // multiple =
+                // this is difficult:
+                // *let |=| = :; let | = |=:; showtoken |=|,|;
+                // > |=|=:
+                // > |=|=:
+                return ''; // ignore
+              }
+            });
+            let saveOrNewinternalTraces: types.Trace[] = saveOrNewinternalTraceStrings.filter((saveOrNewinternalTrace) => saveOrNewinternalTrace !== undefined).map((saveOrNewinternalTrace) => {
+              return {
+                type: saveOrNewinternal!, // saveOrNewinternal is checked above, outside of this arrow function
+                trace: saveOrNewinternalTrace
+              };
+            });
+            matchTraces.push(...saveOrNewinternalTraces);
+          }
         }
         traces.push(...matchTraces);
         return ''; // remove matched character range
@@ -456,15 +461,15 @@ export class MetafontDebugWrapper extends EventEmitter {
       case 'equation':
         // Also match %CAPSULEnnnn. Otherwise CAPSULEnnnn would be added as a variable and METAFONT would try to evaluate it, with nnnn possibly exceeding METAFONT's infinity.
         let varMatches = trace.trace.matchAll(/(?:[xy][xy]?part )?(?:%CAPSULE\d+|([A-Z_a-z`'!?#&@$](?:[A-Z_a-z`'!?#&@$\.\d ])*)(?<!\.))/g);
-        let vars = [...varMatches].map((match) => match[1]); // index 1 for match group, i.e. var name without xypart
-        vars = vars.filter((v) => v !== undefined); // undefined is %CAPSULEnnnn
+        let vars_ = [...varMatches].map((match) => match[1]); // index 1 for match group, i.e. var name without xypart
+        let vars = vars_.filter((v) => v !== undefined) as string[]; // undefined is %CAPSULEnnnn
         if (vars) {
           this.variableNames = [...new Set([...this.variableNames, ...vars])].sort();
         }
         break;
       case 'restore':
         let restoredVar = trace.trace.match(/(.+?)(?:=.*)?/);
-        if (restoredVar) {
+        if (restoredVar && restoredVar[1]) {
           this.variableNames = [...new Set([...this.variableNames, restoredVar[1]])].sort();
         }
         break;
@@ -488,10 +493,12 @@ export class MetafontDebugWrapper extends EventEmitter {
 
   private getCurrentLine(): string | undefined {
     const currentStackFrame = this.stack.at(-1);
-    if (currentStackFrame) {
-      const currentFileLines = this.inputFiles[currentStackFrame.filePath].lines;
-      return currentFileLines[currentStackFrame.lineNumber].trim();
+    if (currentStackFrame === undefined) {
+      return;
     }
+    const inputFile = this.inputFiles[currentStackFrame.filePath];
+    const currentLine = inputFile?.lines[currentStackFrame.lineNumber];
+    return currentLine?.trim();
   }
 
   clearFileBreakpoints(filePath: string) {
@@ -499,17 +506,24 @@ export class MetafontDebugWrapper extends EventEmitter {
   }
 
   async setBreakpoint(filePath: string, line: number): Promise<DebugProtocol.Breakpoint> {
-    if (!this.inputFiles[filePath]) {
+    if (this.inputFiles[filePath] === undefined) {
       // unknown file: add it to be able to add breakpoints for it
       await this.readFile(filePath);
     }
-    const valid = 0 <= line && line < this.inputFiles[filePath].lines.length;
+    const file = this.inputFiles[filePath]!; // ensured above that file is known
+  
+    if (this.breakpoints[filePath] === undefined) {
+      this.breakpoints[filePath] = [];
+    }
+    const breakpoints = this.breakpoints[filePath]!; // ensured above that file is known
+  
+    const valid = 0 <= line && line < file.lines.length;
     const clientLine = line + this.clientLineOffset;
     const breakpoint: DebugProtocol.Breakpoint = { id: this.lastSetBreakpointId++, verified: valid, line: clientLine, column: this.clientColumnOffset };
     if (valid) {
       this.sendEvent('breakpointValidated', breakpoint);
     }
-    this.breakpoints[filePath].push(breakpoint);
+    breakpoints.push(breakpoint);
     return breakpoint;
   }
 
@@ -525,10 +539,10 @@ export class MetafontDebugWrapper extends EventEmitter {
       const mfOutput = mfProcessResult?.cleanResponse;
       const resultMatch = mfOutput.match(/^>> (.*)\n$/s);
       let exprType: string | undefined;
-      if (resultMatch) {
+      if (resultMatch && resultMatch[1]) {
         let content = resultMatch[1];
         const lineMatch = content.match(/(Path|Edge structure) at line \d+:\n(.*)\n?\n/s);
-        if (lineMatch) {
+        if (lineMatch && lineMatch[2]) {
           content = lineMatch[2];
           if (lineMatch[1] === 'Path') {
             exprType = 'path';
@@ -570,12 +584,12 @@ export class MetafontDebugWrapper extends EventEmitter {
       value = value.slice(1, value.length-1); // remove ()
       const partValues = value.split(',');
       const partList: [string, string][] = [
-        ['xpart ' + name, partValues[0]],
-        ['ypart ' + name, partValues[1]],
-        ['xxpart ' + name, partValues[2]],
-        ['xypart ' + name, partValues[3]],
-        ['yxpart ' + name, partValues[4]],
-        ['yypart ' + name, partValues[5]]
+        ['xpart ' + name, partValues[0]!], // above regex tests for 6 elements separated by ;
+        ['ypart ' + name, partValues[1]!],
+        ['xxpart ' + name, partValues[2]!],
+        ['xypart ' + name, partValues[3]!],
+        ['yxpart ' + name, partValues[4]!],
+        ['yypart ' + name, partValues[5]!]
       ];
       for (const [partName, partValue] of partList) {
         this.setVariable(partName, partValue, false); // don't use assignment since parts are not a variable
