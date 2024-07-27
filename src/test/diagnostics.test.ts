@@ -22,7 +22,6 @@ suite('Diagnostics', () => {
 async function testDiagnostics(docUri: vscode.Uri, expectedDiagnostics: vscode.Diagnostic[]) {
   await activateExtension();
   await openDocument(docUri);
-  vscode.window.showInformationMessage('doc open.');
 
   const actualDiagnostics = vscode.languages.getDiagnostics(docUri);
 
