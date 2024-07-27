@@ -378,12 +378,15 @@ function sortSemanticTokens(tokens: SemanticTokens): SemanticTokens {
   // make abs line and char number
   const tokenDataSplittedAbs = tokenDataSplitted.reduce<[number, number, number, number, number][]>(
     (accumulator, currentValue, currentIndex) => {
-      const lastVal = accumulator[currentIndex - 1];
-      if (lastVal === undefined) {
-        return accumulator;
+      const prevVal = accumulator[currentIndex - 1];
+      let prevIndex: number;
+      if (prevVal === undefined) {
+        prevIndex = 0;
+      } else {
+        prevIndex = prevVal[0];
       }
       accumulator.push([
-        currentIndex === 0 ? currentValue[0] : currentValue[0] + lastVal[0],
+        currentValue[0] + prevIndex,
         ...(currentValue.slice(1) as [number, number, number, number])
       ]);
       return accumulator;
@@ -394,12 +397,15 @@ function sortSemanticTokens(tokens: SemanticTokens): SemanticTokens {
   // turn back into differences
   const tokenDataSplittedSorted = tokenDataSplittedAbs.reduce<number[][]>(
     (accumulator, currentValue, currentIndex) => {
-      let lastVal = tokenDataSplittedAbs[currentIndex - 1];
-      if (lastVal === undefined) {
-        return accumulator;
+      const prevVal = tokenDataSplittedAbs[currentIndex - 1];
+      let prevIndex: number;
+      if (prevVal === undefined) {
+        prevIndex = 0;
+      } else {
+        prevIndex = prevVal[0];
       }
       accumulator.push([
-        currentIndex === 0 ? currentValue[0] : currentValue[0] - lastVal[0],
+        currentValue[0] - prevIndex,
         ...currentValue.slice(1)
       ]);
       return accumulator;
