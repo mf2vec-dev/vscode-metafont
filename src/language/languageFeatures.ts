@@ -76,7 +76,15 @@ function startClient(ctx: vscode.ExtensionContext) {
     // Open all mf files to make server aware of them. (probably not the best way to do this)
     const uris = await vscode.workspace.findFiles('**/*.mf');
     for (const uri of uris) {
-      await vscode.workspace.openTextDocument(uri.path);
+      try {
+        await vscode.workspace.openTextDocument(uri.path);
+      } catch (error) {
+        if (error instanceof Error && error.name === 'CodeExpectedError') {
+          // It's a binary file, ignore it.
+          continue;
+        }
+        throw error;
+      }
     }
   });
 
