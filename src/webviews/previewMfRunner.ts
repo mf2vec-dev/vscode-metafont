@@ -297,10 +297,11 @@ export function runMfForPreview(absFilePath: string, firstLine = '', logPaths = 
             })
           );
         } else if (cmdName === 'skipto') {
-          skiptos[cmdBody] = tmpList;
+          skiptos[parseInt(cmdBody)] = tmpList;
         } else if (cmdName === '::') {
-          if (skiptos[lastCmdBody] !== undefined) {
-            tmpList.push(...skiptos[lastCmdBody]);
+          const savedTmpList = skiptos[parseInt(lastCmdBody)];
+          if (savedTmpList !== undefined) {
+            tmpList.push(...savedTmpList);
           }
         } else {
           i--; // outer loop will increase again
@@ -333,7 +334,7 @@ export function parsePathString(pathStr: string, line: number, curFilePath: stri
     if (bezierCurveTosStr === undefined) {
       return;
     }
-    let cycle;
+    let cycle: {cp1: [number, number]; cp2: [number, number]} | undefined;
     if (pathMatch[4] && pathMatch[5] && pathMatch[6] && pathMatch[7]) {
       cycle = {
         cp1: [parseFloat(pathMatch[4]), parseFloat(pathMatch[5])],
@@ -369,14 +370,14 @@ export function parsePathString(pathStr: string, line: number, curFilePath: stri
 export function parsePictureString(pictureStr: string, line: number, curFilePath: string): types.MfPicture | undefined {
   pictureStr = pictureStr.replaceAll('\n ', ' ');
   const rowStrings = pictureStr.split('\n');
-  let picEdges = {};
+  let picEdges: types.MfPicture['edges'] = {};
   for (const rowStr of rowStrings) {
     const rowMatch = rowStr.match(/row (-?\d+): (.*)$/);
     if (rowMatch && rowMatch[1] && rowMatch[2]) {
       const rowNum = parseInt(rowMatch[1]);
       const rowEdgesStr = rowMatch[2];
       const rowEdgeMatches = rowEdgesStr.matchAll(/(-?\d+)(\++|-+)/g);
-      let rowEdges = {};
+      let rowEdges: types.MfPicture['edges']['row'] = {};
       for (const edgeMatch of rowEdgeMatches) {
         if (edgeMatch[1] === undefined || edgeMatch[2] === undefined) {
           continue;
@@ -384,7 +385,7 @@ export function parsePictureString(pictureStr: string, line: number, curFilePath
         const colNum = parseInt(edgeMatch[1]);
         const edgesStr = edgeMatch[2];
         const edges = edgesStr.length * (edgesStr[0] === '-' ? -1 : 1);
-        if (rowEdges.hasOwnProperty(colNum)) {
+        if (rowEdges[colNum] !== undefined) {
           rowEdges[colNum] += edges;
         } else {
           rowEdges[colNum] = edges;

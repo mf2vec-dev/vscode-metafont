@@ -169,13 +169,12 @@ export function mfPath2PreviewPathData(mfPath: types.MfPathData): types.PreviewB
   return previewPath;
 }
 
-type PixelRow = [row: number, startCol: number, endCol: number, numRows: number];
 export function mfPicture2PreviewPicture(mfPicture: types.MfPicture): types.PreviewPicture {
   let previewPictureData: types.PreviewPicture['data'] = {};
   for (const rowNumStr in mfPicture.edges) {
 
-    let pos: PixelRow[] = [];
-    let neg: PixelRow[] = [];
+    let pos: types.PixelRow[] = [];
+    let neg: types.PixelRow[] = [];
     let curWeight = 0;
     let starts: number[] = [];
     const row = mfPicture.edges[rowNumStr];
@@ -248,7 +247,12 @@ export type BoxLine = {
   xGlyphPos: number;
   yGlyphPos: number;
 };
-function combinePixelRows(picData: {[key: string]: {pos: BoxLine[]; neg: BoxLine[]}}, key: 'pos' | 'neg') {
+
+/**
+ * Modifies picData by reducing the number of boxes.
+ * If two or more adjacent boxes have the same position and width, one tall box with that position and with is used.
+*/
+function combinePixelRows(picData: types.PreviewPicture['data'], key: 'pos' | 'neg') {
   const rowNums = Object.keys(picData).map((k) => parseInt(k, 10)).sort((a, b) => a - b);
   for (const rowNum of rowNums) { // loop over rows
     const row = picData[rowNum];
@@ -266,8 +270,8 @@ function combinePixelRows(picData: {[key: string]: {pos: BoxLine[]; neg: BoxLine
         for (let j = 0; j < picDataI[key].length; j++) { // loop over all boxes in the next row
           const belowBoxLine = picDataI[key][j];
           if (belowBoxLine !== undefined && boxRow[1] === belowBoxLine[1] && boxRow[2] === belowBoxLine[2]) {
-            boxRow[3] += 1;
-            picDataI[key].splice(j, 1);
+            boxRow[3] += 1; // increase hight
+            picDataI[key].splice(j, 1); // remove box
             found = true;
             break; // only one box per line
           }

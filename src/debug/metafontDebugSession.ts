@@ -1,5 +1,6 @@
 import * as DebugAdapter from '@vscode/debugadapter';
 import { DebugProtocol } from '@vscode/debugprotocol';
+// @ts-ignore // There is no declaration file for the 'await-notify' module.
 import { Subject } from 'await-notify';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -205,20 +206,20 @@ export class MetafontDebugSession extends DebugAdapter.LoggingDebugSession {
         const varRef = i + this.maxScopeRef+1;
         const varValue = await this.evaluateExpression(varName);
         let ref: number | undefined = undefined;
-        let indexedVarialbese: number | undefined = undefined;
+        let indexedVariables: number | undefined = undefined;
         let namedVariables: number | undefined = undefined;
         if (/\([^,]+,[^,]+\)/.test(varValue)) {
           // pair
           ref = varRef;
-          indexedVarialbese = 0;
+          indexedVariables = 0;
           namedVariables = 2;
         } else if (/\([^,]+(?:,[^,]+){5}\)/.test(varValue)) {
           // transform
           ref = varRef;
-          indexedVarialbese = 0;
+          indexedVariables = 0;
           namedVariables = 6;
         }
-        let variable: DebugProtocol.Variable = new DebugAdapter.Variable(varName, varValue, ref, indexedVarialbese, namedVariables);
+        let variable: DebugProtocol.Variable = new DebugAdapter.Variable(varName, varValue, ref, indexedVariables, namedVariables);
         variables.push(variable);
       }
     } else {

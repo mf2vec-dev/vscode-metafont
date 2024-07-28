@@ -71,6 +71,8 @@ export function isMfLigtable(cmd: MfCommand): cmd is MfLigtable {
 
 // types to store info to pass to preview
 
+export type PixelRow = [row: number, startCol: number, endCol: number, numRows: number];
+
 export type PreviewBezier = {
   line: number; // one-based
   filePath: string; // absolute path
@@ -89,7 +91,12 @@ export type PreviewPicture = {
   line: number; // one-based
   filePath: string; // absolute path
   type: 'Picture';
-  data: {};
+  data: {
+    [key: string]: {
+      pos: PixelRow[];
+      neg: PixelRow[];
+    };
+  };
   xoffset: number;
   yoffset: number;
   xGlyphPos: number;
