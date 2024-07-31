@@ -1,0 +1,5 @@
+def a(expr x) (suffix s)
+  (text t) expr e of o =
+enddef;
+
+a(

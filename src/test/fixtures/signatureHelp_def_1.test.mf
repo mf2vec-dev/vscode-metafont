@@ -1,0 +1,4 @@
+def a(expr x, y)(expr z)(suffix s)text t =
+enddef;
+
+a(
