@@ -211,11 +211,15 @@ _patterns: # everything here needs to be escaped as needed for regex
       ')*'
     ]
   - &parameterHeadingAndIsPattern8Captures !join [
+      # parameter heading including is (=, :=) with 8 captures
       # parameter matching is needed here since = and := are valid parameter names
       '(?:', # delimited parameters with separator (
         *tokenSeparator,
         '(', # 1 ( # delimited parameters (
           '(?:',
+            # The following separator pattern won't capture a separator before first delimited parameter's ( since the separator pattern above captured it.
+            # This separator pattern is required in the case of multiple delimited parameters, e.g. '(expr e) (suffix s)' (note the space).
+            *tokenSeparator,
             '\(',
             '(?:',
               *tokenSeparator,
