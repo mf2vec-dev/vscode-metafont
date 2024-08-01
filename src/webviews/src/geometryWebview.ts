@@ -1,4 +1,4 @@
-import { contentDims, initTransform, previewTransforms, resetContentDims, resetTransform } from './preview';
+import { contentDims, initTransform, PreviewTransform, previewTransforms, resetContentDims, resetTransform } from './preview';
 import { clearElement, postLoaded, setStatusIcon, updateTitleBar } from './webview';
 
 const styles = {
@@ -21,10 +21,11 @@ export let previewContentReferences: HTMLElement[] = [];
 export const previewContainer = document.getElementById('preview-container')!;
 export const titleBar = document.getElementById('title-bar')!;
 
-const previewTransformDefault = {
+const previewTransformDefault: PreviewTransform = {
   x: previewContainer.clientWidth/2, // preview
   y: previewContainer.clientHeight/2, // preview
   zoom: 1,
+  isDefault: true
 };
 
 let multiGeometryWebview = false;
@@ -337,7 +338,7 @@ function drawGeom(preview: number, obj: any, grayedOut=false) {
 }
 
 let refreshData;
-function refresh() {
+function refresh(alsoResetTransforms=true) {
   if (refreshData !== undefined) {
     const titleBar = document.getElementById('title-bar')!;
     updateTitleBar(titleBar, refreshData.titleBarItems);
@@ -346,11 +347,13 @@ function refresh() {
     previewContents = [];
     previewContentReferences = [];
     previewLabels = [];
-    previewTransforms.length = 0;
+    if (alsoResetTransforms) {
+      previewTransforms.length = 0;
+    }
     resetContentDims();
-    for (let preview = 0; preview < refreshData.previewData.length; preview++) {
-      addPreviewToPreviewContainer();
-      const previewData = refreshData.previewData[preview];
+    for (let previewI = 0; previewI < refreshData.previewData.length; previewI++) {
+      addPreviewToPreviewContainer(alsoResetTransforms);
+      const previewData = refreshData.previewData[previewI];
       if (previewData.contentGeneralInfo) {
         contentDims.push({
           contentHeight: previewData.contentGeneralInfo.contentHeight,
@@ -360,22 +363,24 @@ function refresh() {
           contentTotalHeight: previewData.contentGeneralInfo.contentHeight + previewData.contentGeneralInfo.contentDepth,
           contentTotalWidth: previewData.contentGeneralInfo.contentLeftWidth + previewData.contentGeneralInfo.contentRightWidth
         });
-        resetTransform(preview);
+        if (alsoResetTransforms) {
+          resetTransform(previewI);
+        }
         if (previewData.contentGeneralInfo.contentPicture) {
-          addToPreview(preview, [previewData.contentGeneralInfo.contentPicture], true);
+          addToPreview(previewI, [previewData.contentGeneralInfo.contentPicture], true);
         }
         if (previewData.contentGeneralInfo.contentLabel) {
           previewLabels[previews.length-1].innerText = previewData.contentGeneralInfo.contentLabel;
         }
       }
       if (previewData.contentGeneralItems) {
-        addToPreview(preview, previewData.contentGeneralItems);
+        addToPreview(previewI, previewData.contentGeneralItems);
       }
       if (previewData.contentItems) {
-        addToPreview(preview, previewData.contentItems);
+        addToPreview(previewI, previewData.contentItems);
       }
       if (previewData.futureItems) {
-        addToPreview(preview, previewData.futureItems, true);
+        addToPreview(previewI, previewData.futureItems, true);
       }
     }
   }
@@ -403,7 +408,7 @@ function registerPreviewOptionCheckbox(childNode) {
         } else {
           parentCheckbox.indeterminate = true;
         }
-        refresh();
+        refresh(false);
       }
     }));
   } else {
@@ -411,7 +416,7 @@ function registerPreviewOptionCheckbox(childNode) {
       if (e.target === childNode) {
         childNode.indeterminate = false;
         previewOptions[childNode.id] = childNode.checked;
-        refresh();
+        refresh(false);
         // set sub checkboxes
         const checkboxList = [...childNode.parentElement.childNodes].find((n) => n.nodeName !== '#text' && n.getAttribute('parent-id') === childNode.id);
         if (checkboxList !== undefined) {
@@ -430,7 +435,7 @@ function getPreviewOption(option, dflt = true) {
   }
 }
 
-export function addPreviewToPreviewContainer() {
+export function addPreviewToPreviewContainer(createNewTransform=true) {
   console.log('addPreviewToPreviewContainer');
   const templatePreview = document.getElementById('template-preview')?.innerHTML;
   if (templatePreview !== undefined && previewContainer !== null) {
@@ -440,7 +445,9 @@ export function addPreviewToPreviewContainer() {
   previews.push(preview);
   previewContents.push(preview.querySelector('#preview-content')!);
   previewContentReferences.push(preview.querySelector('#preview-content-reference')!);
-  previewTransforms.push({...previewTransformDefault}); // shallow copy
+  if (createNewTransform) {
+    previewTransforms.push({...previewTransformDefault}); // shallow copy
+  }
 
   if (multiGeometryWebview) {
     const div = document.createElement('div');
@@ -456,7 +463,11 @@ export function addPreviewToPreviewContainer() {
   }
 
   new ResizeObserver((entries) => {
-    resetTransform(i);
+    // Reset if default to keep glyph completely visible.
+    if (previewTransforms[i].isDefault) {
+      resetTransform(i);
+    }
+    // Don't reseth otherwise to keep a focus chosen by user.
   }).observe(preview);
 }
 

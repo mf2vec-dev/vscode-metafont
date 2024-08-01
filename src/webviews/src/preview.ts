@@ -11,10 +11,11 @@ type ContentDims = {
 };
 export let contentDims: ContentDims[] = [];
 
-type PreviewTransform = {
+export type PreviewTransform = {
   x: number;
   y: number;
   zoom: number;
+  isDefault: boolean;
 };
 export let previewTransforms: PreviewTransform[] = [];
 
@@ -33,6 +34,7 @@ export function initTransform(i: number, preview: HTMLElement) {
     previewTransform.x = previewTransform.x * s + (e.clientX - previews[i].getBoundingClientRect().left) * (1 - s);
     previewTransform.y = previewTransform.y * s + (e.clientY - previews[i].getBoundingClientRect().top) * (1 - s);
     previewTransform.zoom *= s;
+    previewTransform.isDefault = false;
     updateTransform(i);
   }
   function panElement(e) {
@@ -41,6 +43,7 @@ export function initTransform(i: number, preview: HTMLElement) {
     previewTransforms[i].y += (e.clientY - startY);
     startX = e.clientX;
     startY = e.clientY;
+    previewTransforms[i].isDefault = false;
     updateTransform(i);
   }
 
@@ -83,6 +86,7 @@ export function resetTransform(i: number) {
     x: previews[i].clientWidth/2 + leftWidth*zoom/2 - rightWidth*zoom/2,
     y: previews[i].clientHeight/2 + height*zoom/2 - depth*zoom/2,
     zoom: zoom,
+    isDefault: true
   };
   updateTransform(i);
 }
