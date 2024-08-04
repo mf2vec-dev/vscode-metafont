@@ -1,6 +1,27 @@
 # Changelog
 
 
+## 0.3.2 - 2024-08-04
+
+### Added
+
+- Add test for semantic tokens and signature help.
+
+### Changed
+
+- Increase tsconfig target to ES2022.
+- Activate `noImplicitAny` rule. Adjust code accordingly. Improve typing.
+- Update `package-lock.json`.
+
+### Fixed
+
+- Keep preview transform (translation and zoom) when changing preview option or resizing preview.
+- Fix tmLanguage to support whitespace between delimited arguments.
+- Fix bug causing empty semantic tokens.
+- Fix bugs in test setup and improve tests.
+- Fix server crash caused by binary .mf files (#1).
+
+
 ## 0.3.1 - 2024-05-20
 
 ### Changed
